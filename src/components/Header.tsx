@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X, Phone, Mail, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Phone, Mail, MapPin, ChevronDown } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { categories } from '@/data/products';
 import { Button } from '@/components/ui/button';
+import logoImg from '@/assets/logo-annovasoft.png';
 
 export default function Header() {
   const { totalItems } = useCart();
@@ -15,13 +16,15 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full">
       {/* Top bar */}
       <div className="bg-accent text-accent-foreground text-xs py-1.5">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 flex items-center justify-between flex-wrap gap-y-1">
+          <div className="flex items-center gap-3 divide-x divide-accent-foreground/20">
             <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> +57 305 7950550</span>
-            <span className="hidden sm:flex items-center gap-1"><Mail className="w-3 h-3" /> comercial1@annovasoft.com</span>
+            <span className="hidden sm:flex items-center gap-1 pl-3"><Phone className="w-3 h-3" /> +57 301 6491625</span>
+            <span className="hidden md:flex items-center gap-1 pl-3"><Mail className="w-3 h-3" /> comercial1@annovasoft.com</span>
+            <span className="hidden lg:flex items-center gap-1 pl-3"><Mail className="w-3 h-3" /> gerencia@annovasoft.com</span>
           </div>
-          <div className="flex items-center gap-4">
-            <span>Envíos a todo Colombia</span>
+          <div className="hidden xl:flex items-center gap-1 text-accent-foreground/80">
+            <MapPin className="w-3 h-3" /> Av. Cra 15 #79-65, Bogotá 110221, Colombia
           </div>
         </div>
       </div>
@@ -36,10 +39,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
-            <span className="font-bebas text-2xl md:text-3xl tracking-wider">
-              <span className="text-primary">ANNOVA</span>
-              <span className="text-secondary"> SOFTWARE</span>
-            </span>
+            <img src={logoImg} alt="AnnovaSoft" className="h-10 md:h-12 w-auto" />
           </Link>
 
           {/* Search */}
@@ -79,14 +79,13 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Main nav + Categories nav */}
+      {/* Main nav */}
       <nav className="bg-accent text-accent-foreground hidden lg:block">
         <div className="container mx-auto px-4">
-          <div className="flex items-center">
-            {/* Main pages */}
-            <Link to="/" className="py-2.5 px-3 text-sm font-semibold hover:bg-primary transition-colors whitespace-nowrap">Inicio</Link>
+          <div className="flex items-center gap-1">
+            <Link to="/" className="py-2.5 px-4 text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm">Inicio</Link>
             <button
-              className="flex items-center gap-2 py-2.5 px-3 font-semibold text-sm hover:bg-primary transition-colors"
+              className="flex items-center gap-2 py-2.5 px-4 font-semibold text-sm hover:bg-primary hover:text-primary-foreground transition-colors rounded-sm"
               onMouseEnter={() => setMegaMenuOpen(true)}
               onMouseLeave={() => setMegaMenuOpen(false)}
             >
@@ -96,14 +95,14 @@ export default function Header() {
               <Link
                 key={cat.slug}
                 to={`/tienda?categoria=${cat.slug}`}
-                className="py-2.5 px-3 text-sm font-medium hover:bg-primary transition-colors whitespace-nowrap"
+                className="py-2.5 px-4 text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm"
               >
                 {cat.name}
               </Link>
             ))}
-            <Link to="/blog" className="py-2.5 px-3 text-sm font-semibold hover:bg-primary transition-colors whitespace-nowrap">Blog</Link>
-            <Link to="/nosotros" className="py-2.5 px-3 text-sm font-semibold hover:bg-primary transition-colors whitespace-nowrap">Nosotros</Link>
-            <Link to="/contacto" className="py-2.5 px-3 text-sm font-semibold hover:bg-primary transition-colors whitespace-nowrap">Contáctanos</Link>
+            <Link to="/blog" className="py-2.5 px-4 text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm">Blog</Link>
+            <Link to="/nosotros" className="py-2.5 px-4 text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm">Nosotros</Link>
+            <Link to="/contacto" className="py-2.5 px-4 text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm">Contáctanos</Link>
           </div>
         </div>
       </nav>
