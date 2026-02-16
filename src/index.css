@@ -18,7 +18,7 @@
     --primary: 0 100% 41%; /* #D10003 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 206 100% 45%; /* #0089E4 */
+    --secondary: 210 10% 58%; /* Corporate gray */
     --secondary-foreground: 0 0% 100%;
 
     --muted: 210 20% 96%;
@@ -55,7 +55,7 @@
     --popover-foreground: 0 0% 98%;
     --primary: 0 100% 41%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 206 100% 45%;
+    --secondary: 210 10% 50%;
     --secondary-foreground: 0 0% 100%;
     --muted: 220 30% 15%;
     --muted-foreground: 215 20% 65%;

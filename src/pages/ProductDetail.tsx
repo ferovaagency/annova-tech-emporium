@@ -82,12 +82,18 @@ export default function ProductDetail() {
 
             <p className="text-muted-foreground mb-6">{product.shortDescription}</p>
 
+            {/* Availability notice */}
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mb-4 flex items-start gap-2">
+              <MessageCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-sm font-medium text-foreground">Antes de comprar, consulta disponibilidad por WhatsApp</p>
+            </div>
+
             <div className="space-y-3 mb-8">
               <button onClick={() => addToCart(product)} className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-lg text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
                 <ShoppingCart className="w-5 h-5" /> Agregar al Carrito
               </button>
               <a
-                href={`https://wa.me/5712345678?text=${whatsappMsg}`}
+                href={`https://wa.me/573057950550?text=${whatsappMsg}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full bg-[#25D366] text-white font-bold py-3 rounded-lg text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
@@ -161,7 +167,7 @@ export default function ProductDetail() {
         {/* Related */}
         {related.length > 0 && (
           <section>
-            <h2 className="text-2xl font-bebas mb-6">Productos <span className="text-secondary">Relacionados</span></h2>
+            <h2 className="text-2xl font-bebas mb-6">Productos <span className="text-primary">Relacionados</span></h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {related.map(p => <ProductCard key={p.id} product={p} />)}
             </div>

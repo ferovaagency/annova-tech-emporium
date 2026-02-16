@@ -12,9 +12,11 @@ export default function Footer() {
             <h3 className="font-bebas text-2xl mb-4"><span className="text-primary">ANNOVA</span> SOFTWARE</h3>
             <p className="text-sm opacity-80 mb-4">Proveedor líder de soluciones tecnológicas empresariales en Colombia. Software, servidores, infraestructura y equipos de cómputo.</p>
             <div className="space-y-2 text-sm opacity-80">
-              <p className="flex items-center gap-2"><Phone className="w-4 h-4" /> +57 (1) 234-5678</p>
-              <p className="flex items-center gap-2"><Mail className="w-4 h-4" /> ventas@annova.com.co</p>
-              <p className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Bogotá, Colombia</p>
+              <p className="flex items-center gap-2"><Phone className="w-4 h-4" /> +57 305 7950550</p>
+              <p className="flex items-center gap-2"><Phone className="w-4 h-4" /> +57 301 6491625</p>
+              <p className="flex items-center gap-2"><Mail className="w-4 h-4" /> comercial1@annovasoft.com</p>
+              <p className="flex items-center gap-2"><Mail className="w-4 h-4" /> gerencia@annovasoft.com</p>
+              <p className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Avenida Carrera 15 79-65, Bogotá 110221, Colombia</p>
             </div>
           </div>
 
@@ -36,19 +38,22 @@ export default function Footer() {
           <div>
             <h4 className="font-bebas text-xl mb-4">Empresa</h4>
             <ul className="space-y-2 text-sm">
+              <li><Link to="/" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Inicio</Link></li>
+              <li><Link to="/tienda" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Tienda</Link></li>
               <li><Link to="/blog" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Blog</Link></li>
+              <li><Link to="/nosotros" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Nosotros</Link></li>
+              <li><Link to="/contacto" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Contáctanos</Link></li>
               <li><span className="opacity-80">Términos y condiciones</span></li>
               <li><span className="opacity-80">Política de privacidad</span></li>
-              <li><span className="opacity-80">Política de garantía</span></li>
             </ul>
           </div>
 
-          {/* Newsletter */}
+          {/* Quote */}
           <div>
             <h4 className="font-bebas text-xl mb-4">Cotización Empresarial</h4>
             <p className="text-sm opacity-80 mb-4">¿Necesitas una cotización para tu empresa? Contáctanos y te asesoramos.</p>
             <a
-              href="https://wa.me/5712345678?text=Hola%2C%20necesito%20una%20cotización%20empresarial"
+              href="https://wa.me/573057950550?text=Hola%2C%20necesito%20una%20cotización%20empresarial"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-primary text-primary-foreground font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 transition-opacity text-sm"
@@ -59,7 +64,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-accent-foreground/20 mt-8 pt-6 text-center text-sm opacity-60">
-          <p>© 2025 Annova Software y Accesorios. Todos los derechos reservados. NIT: 900.000.000-0</p>
+          <p>© 2025 Annova Software y Accesorios. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
