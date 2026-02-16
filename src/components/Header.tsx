@@ -31,7 +31,7 @@ export default function Header() {
 
       {/* Main header */}
       <div className="bg-background border-b shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center gap-4">
+        <div className="container mx-auto flex items-center gap-4 px-[20px] py-[30px]">
           {/* Mobile menu */}
           <button className="lg:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -49,13 +49,13 @@ export default function Header() {
                 type="text"
                 placeholder="Buscar productos, marcas, categorías..."
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full h-11 pl-4 pr-12 rounded-lg border-2 border-muted-foreground/30 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-              />
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-11 pl-4 pr-12 rounded-lg border-2 border-muted-foreground/30 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors" />
+
               <Link
                 to={searchQuery ? `/tienda?q=${encodeURIComponent(searchQuery)}` : '/tienda'}
-                className="absolute right-0 top-0 h-full px-4 bg-primary text-primary-foreground rounded-r-lg flex items-center hover:opacity-90 transition-opacity"
-              >
+                className="absolute right-0 top-0 h-full px-4 bg-primary text-primary-foreground rounded-r-lg flex items-center hover:opacity-90 transition-opacity">
+
                 <Search className="w-5 h-5" />
               </Link>
             </div>
@@ -69,11 +69,11 @@ export default function Header() {
             </Button>
             <Link to="/carrito" className="relative p-2 hover:bg-muted rounded-lg transition-colors">
               <ShoppingCart className="w-5 h-5" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {totalItems > 0 &&
+              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {totalItems}
                 </span>
-              )}
+              }
             </Link>
           </div>
         </div>
@@ -87,19 +87,19 @@ export default function Header() {
             <button
               className="flex items-center gap-2 py-2.5 px-4 font-semibold text-sm hover:bg-primary hover:text-primary-foreground transition-colors rounded-sm"
               onMouseEnter={() => setMegaMenuOpen(true)}
-              onMouseLeave={() => setMegaMenuOpen(false)}
-            >
+              onMouseLeave={() => setMegaMenuOpen(false)}>
+
               <Menu className="w-4 h-4" /> Categorías <ChevronDown className="w-3 h-3" />
             </button>
-            {categories.map(cat => (
-              <Link
-                key={cat.slug}
-                to={`/tienda?categoria=${cat.slug}`}
-                className="py-2.5 px-4 text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm"
-              >
+            {categories.map((cat) =>
+            <Link
+              key={cat.slug}
+              to={`/tienda?categoria=${cat.slug}`}
+              className="py-2.5 px-4 text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm">
+
                 {cat.name}
               </Link>
-            ))}
+            )}
             <Link to="/blog" className="py-2.5 px-4 text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm">Blog</Link>
             <Link to="/nosotros" className="py-2.5 px-4 text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm">Nosotros</Link>
             <Link to="/contacto" className="py-2.5 px-4 text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap rounded-sm">Contáctanos</Link>
@@ -108,62 +108,62 @@ export default function Header() {
       </nav>
 
       {/* Mega menu dropdown */}
-      {megaMenuOpen && (
-        <div
-          className="absolute left-0 w-full bg-background border-b shadow-xl z-50 hidden lg:block"
-          onMouseEnter={() => setMegaMenuOpen(true)}
-          onMouseLeave={() => setMegaMenuOpen(false)}
-        >
+      {megaMenuOpen &&
+      <div
+        className="absolute left-0 w-full bg-background border-b shadow-xl z-50 hidden lg:block"
+        onMouseEnter={() => setMegaMenuOpen(true)}
+        onMouseLeave={() => setMegaMenuOpen(false)}>
+
           <div className="container mx-auto px-4 py-6 grid grid-cols-3 gap-6">
-            {categories.map(cat => (
-              <Link
-                key={cat.slug}
-                to={`/tienda?categoria=${cat.slug}`}
-                className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted transition-colors group"
-              >
+            {categories.map((cat) =>
+          <Link
+            key={cat.slug}
+            to={`/tienda?categoria=${cat.slug}`}
+            className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted transition-colors group">
+
                 <span className="text-3xl">{cat.icon}</span>
                 <div>
                   <h3 className="font-montserrat font-semibold text-sm group-hover:text-primary transition-colors">{cat.name}</h3>
                   <p className="text-xs text-muted-foreground mt-1">{cat.description}</p>
                 </div>
               </Link>
-            ))}
+          )}
           </div>
         </div>
-      )}
+      }
 
       {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden bg-background border-b shadow-lg">
+      {mobileMenuOpen &&
+      <div className="lg:hidden bg-background border-b shadow-lg">
           <div className="p-4">
             <div className="relative mb-4">
               <input
-                type="text"
-                placeholder="Buscar productos..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-4 pr-10 rounded-lg border border-input bg-background text-foreground"
-              />
+              type="text"
+              placeholder="Buscar productos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-10 pl-4 pr-10 rounded-lg border border-input bg-background text-foreground" />
+
               <Search className="absolute right-3 top-2.5 w-5 h-5 text-muted-foreground" />
             </div>
             <Link to="/" className="block py-3 px-2 font-semibold text-sm border-b border-border" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
-            {categories.map(cat => (
-              <Link
-                key={cat.slug}
-                to={`/tienda?categoria=${cat.slug}`}
-                className="flex items-center gap-3 py-3 px-2 border-b border-border hover:bg-muted transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
+            {categories.map((cat) =>
+          <Link
+            key={cat.slug}
+            to={`/tienda?categoria=${cat.slug}`}
+            className="flex items-center gap-3 py-3 px-2 border-b border-border hover:bg-muted transition-colors"
+            onClick={() => setMobileMenuOpen(false)}>
+
                 <span className="text-xl">{cat.icon}</span>
                 <span className="font-medium text-sm">{cat.name}</span>
               </Link>
-            ))}
+          )}
             <Link to="/blog" className="block py-3 px-2 font-semibold text-sm border-b border-border" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
             <Link to="/nosotros" className="block py-3 px-2 font-semibold text-sm border-b border-border" onClick={() => setMobileMenuOpen(false)}>Nosotros</Link>
             <Link to="/contacto" className="block py-3 px-2 font-semibold text-sm" onClick={() => setMobileMenuOpen(false)}>Contáctanos</Link>
           </div>
         </div>
-      )}
-    </header>
-  );
+      }
+    </header>);
+
 }
