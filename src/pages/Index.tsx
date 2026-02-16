@@ -26,7 +26,7 @@ export default function Index() {
               <Link to="/tienda" className="bg-primary text-primary-foreground font-semibold px-8 py-3 rounded-lg text-lg hover:opacity-90 transition-opacity inline-flex items-center gap-2">
                 Comprar Ahora <ArrowRight className="w-5 h-5" />
               </Link>
-              <a href="https://wa.me/5712345678?text=Necesito%20cotización%20empresarial" target="_blank" rel="noopener noreferrer" className="border-2 border-accent-foreground/30 text-accent-foreground font-semibold px-8 py-3 rounded-lg text-lg hover:border-accent-foreground/60 transition-colors">
+              <a href="https://wa.me/573057950550?text=Necesito%20cotización%20empresarial" target="_blank" rel="noopener noreferrer" className="border-2 border-accent-foreground/30 text-accent-foreground font-semibold px-8 py-3 rounded-lg text-lg hover:border-accent-foreground/60 transition-colors">
                 Cotizar
               </a>
             </div>
@@ -40,9 +40,9 @@ export default function Index() {
       {/* Trust bar */}
       <section className="bg-muted py-4 border-b">
         <div className="container mx-auto px-4 flex flex-wrap justify-center gap-8 text-sm font-medium text-muted-foreground">
-          <span className="flex items-center gap-2"><Truck className="w-5 h-5 text-secondary" /> Envío a todo Colombia</span>
-          <span className="flex items-center gap-2"><Shield className="w-5 h-5 text-secondary" /> Garantía empresarial</span>
-          <span className="flex items-center gap-2"><Headphones className="w-5 h-5 text-secondary" /> Soporte dedicado</span>
+          <span className="flex items-center gap-2"><Truck className="w-5 h-5 text-primary" /> Envío a todo Colombia</span>
+          <span className="flex items-center gap-2"><Shield className="w-5 h-5 text-primary" /> Garantía empresarial</span>
+          <span className="flex items-center gap-2"><Headphones className="w-5 h-5 text-primary" /> Soporte dedicado</span>
         </div>
       </section>
 
@@ -113,7 +113,7 @@ export default function Index() {
       {/* Best Sellers */}
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bebas text-center mb-8">Los Más <span className="text-secondary">Vendidos</span></h2>
+          <h2 className="text-3xl md:text-4xl font-bebas text-center mb-8">Los Más <span className="text-primary">Vendidos</span></h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {bestSellers.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
@@ -121,11 +121,11 @@ export default function Index() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-secondary text-secondary-foreground">
+      <section className="py-16 bg-muted border-t">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-5xl font-bebas mb-4">¿Necesitas Equipar Tu Empresa?</h2>
-          <p className="font-montserrat text-lg opacity-90 mb-8 max-w-2xl mx-auto">Solicita una cotización personalizada y recibe asesoría de nuestros expertos en tecnología empresarial.</p>
-          <a href="https://wa.me/5712345678?text=Hola%2C%20necesito%20una%20cotización%20empresarial" target="_blank" rel="noopener noreferrer" className="inline-block bg-primary text-primary-foreground font-bold px-10 py-4 rounded-lg text-lg hover:opacity-90 transition-opacity">
+          <p className="font-montserrat text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">Solicita una cotización personalizada y recibe asesoría de nuestros expertos en tecnología empresarial.</p>
+          <a href="https://wa.me/573057950550?text=Hola%2C%20necesito%20una%20cotización%20empresarial" target="_blank" rel="noopener noreferrer" className="inline-block bg-primary text-primary-foreground font-bold px-10 py-4 rounded-lg text-lg hover:opacity-90 transition-opacity">
             Solicitar Cotización
           </a>
         </div>

@@ -17,11 +17,10 @@ export default function Header() {
       <div className="bg-accent text-accent-foreground text-xs py-1.5">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> +57 (1) 234-5678</span>
-            <span className="hidden sm:flex items-center gap-1"><Mail className="w-3 h-3" /> ventas@annova.com.co</span>
+            <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> +57 305 7950550</span>
+            <span className="hidden sm:flex items-center gap-1"><Mail className="w-3 h-3" /> comercial1@annovasoft.com</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/blog" className="hover:underline">Blog</Link>
             <span>Envíos a todo Colombia</span>
           </div>
         </div>
@@ -51,11 +50,11 @@ export default function Header() {
                 placeholder="Buscar productos, marcas, categorías..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full h-11 pl-4 pr-12 rounded-lg border-2 border-secondary bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                className="w-full h-11 pl-4 pr-12 rounded-lg border-2 border-muted-foreground/30 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
               />
               <Link
                 to={searchQuery ? `/tienda?q=${encodeURIComponent(searchQuery)}` : '/tienda'}
-                className="absolute right-0 top-0 h-full px-4 bg-secondary text-secondary-foreground rounded-r-lg flex items-center hover:opacity-90 transition-opacity"
+                className="absolute right-0 top-0 h-full px-4 bg-primary text-primary-foreground rounded-r-lg flex items-center hover:opacity-90 transition-opacity"
               >
                 <Search className="w-5 h-5" />
               </Link>
@@ -80,12 +79,14 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Categories nav */}
+      {/* Main nav + Categories nav */}
       <nav className="bg-accent text-accent-foreground hidden lg:block">
         <div className="container mx-auto px-4">
           <div className="flex items-center">
+            {/* Main pages */}
+            <Link to="/" className="py-2.5 px-3 text-sm font-semibold hover:bg-primary transition-colors whitespace-nowrap">Inicio</Link>
             <button
-              className="flex items-center gap-2 py-2.5 px-4 font-semibold text-sm hover:bg-primary transition-colors"
+              className="flex items-center gap-2 py-2.5 px-3 font-semibold text-sm hover:bg-primary transition-colors"
               onMouseEnter={() => setMegaMenuOpen(true)}
               onMouseLeave={() => setMegaMenuOpen(false)}
             >
@@ -100,6 +101,9 @@ export default function Header() {
                 {cat.name}
               </Link>
             ))}
+            <Link to="/blog" className="py-2.5 px-3 text-sm font-semibold hover:bg-primary transition-colors whitespace-nowrap">Blog</Link>
+            <Link to="/nosotros" className="py-2.5 px-3 text-sm font-semibold hover:bg-primary transition-colors whitespace-nowrap">Nosotros</Link>
+            <Link to="/contacto" className="py-2.5 px-3 text-sm font-semibold hover:bg-primary transition-colors whitespace-nowrap">Contáctanos</Link>
           </div>
         </div>
       </nav>
@@ -143,6 +147,7 @@ export default function Header() {
               />
               <Search className="absolute right-3 top-2.5 w-5 h-5 text-muted-foreground" />
             </div>
+            <Link to="/" className="block py-3 px-2 font-semibold text-sm border-b border-border" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
             {categories.map(cat => (
               <Link
                 key={cat.slug}
@@ -154,9 +159,9 @@ export default function Header() {
                 <span className="font-medium text-sm">{cat.name}</span>
               </Link>
             ))}
-            <Link to="/blog" className="block py-3 px-2 font-medium text-sm text-secondary" onClick={() => setMobileMenuOpen(false)}>
-              Blog
-            </Link>
+            <Link to="/blog" className="block py-3 px-2 font-semibold text-sm border-b border-border" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
+            <Link to="/nosotros" className="block py-3 px-2 font-semibold text-sm border-b border-border" onClick={() => setMobileMenuOpen(false)}>Nosotros</Link>
+            <Link to="/contacto" className="block py-3 px-2 font-semibold text-sm" onClick={() => setMobileMenuOpen(false)}>Contáctanos</Link>
           </div>
         </div>
       )}
