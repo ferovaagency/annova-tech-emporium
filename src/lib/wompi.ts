@@ -1,6 +1,5 @@
-// Reemplaza las 3 primeras líneas por estas:
-export const WOMPI_PUBLIC_KEY = "pub_prod_eAdkqUXV8IfZ08V8ZnIn1nU5EkIQO0gC"; // ← tu key real aquí
-export const WOMPI_INTEGRITY_SECRET = "prod_integrity_ZGEMtqwAPJ3LUmRrVdqLFDKBmh9weDTj"; // ← tu clave de integridad aquí
+export const WOMPI_PUBLIC_KEY = "pub_prod_eAdkqUXV8IfZ08V8ZnIn1nU5EkIQO0gC";
+export const WOMPI_INTEGRITY_SECRET = "prod_integrity_ZGEMtqwAPJ3LUmRrVdqLFDKBmh9weDTj";
 export const WOMPI_REDIRECT_URL = "https://annova-tech-emporium.lovable.app/pago-resultado";
 
 export async function generateWompiSignature(
@@ -25,9 +24,8 @@ export async function buildWompiCheckoutUrl(params: {
   customerEmail: string;
   customerFullName: string;
   customerPhoneNumber: string;
-  shippingAddress?: { addressLine1: string; city: string };
 }): Promise<string> {
-  const { reference, amountInCents, currency = "COP", customerEmail, customerFullName, customerPhoneNumber, shippingAddress } = params;
+  const { reference, amountInCents, currency = "COP", customerEmail, customerFullName, customerPhoneNumber } = params;
   const signature = await generateWompiSignature(reference, amountInCents, currency);
   const url = new URL("https://checkout.wompi.co/p/");
   url.searchParams.set("public-key", WOMPI_PUBLIC_KEY);
@@ -40,12 +38,6 @@ export async function buildWompiCheckoutUrl(params: {
   url.searchParams.set("customer-data:full-name", customerFullName);
   url.searchParams.set("customer-data:phone-number", customerPhoneNumber.replace(/\D/g, ""));
   url.searchParams.set("customer-data:phone-number-prefix", "+57");
-  if (shippingAddress) {
-    url.searchParams.set("shipping-address:address-line-1", shippingAddress.addressLine1);
-    url.searchParams.set("shipping-address:city", shippingAddress.city);
-    url.searchParams.set("shipping-address:country", "CO");
-    url.searchParams.set("shipping-address:phone-number", customerPhoneNumber.replace(/\D/g, ""));
-  }
   return url.toString();
 }
 

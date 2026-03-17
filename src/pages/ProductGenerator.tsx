@@ -326,6 +326,7 @@ export default function ProductGenerator() {
                 <Input placeholder="Precio COP *" type="number" value={price} onChange={e => setPrice(e.target.value)} />
                 <Input placeholder="Precio oferta COP (opcional)" type="number" value={salePrice} onChange={e => setSalePrice(e.target.value)} />
               </div>
+              <Input placeholder="SKU / Referencia (opcional) — Ej: HP-EB840G10-I7" value={sku} onChange={e => setSku(e.target.value)} />
 
               {/* Condition */}
               <div>
