@@ -13,12 +13,12 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `Eres un redactor experto de fichas de producto para Annova Tech, una empresa colombiana de tecnología empresarial.
+    const systemPrompt = `Eres un redactor experto de fichas de producto para AnnovaSoft (Annova Software y Accesorios SAS), una empresa colombiana de tecnología empresarial.
 Generas contenido completo para fichas de producto. Siempre escribes en español colombiano profesional.
 Responde SOLO con un JSON válido con estos campos exactos:
 - "description": string (HTML estructurado de la descripción larga)
 - "short_description": string (máx 160 chars, optimizada para SEO)
-- "meta_title": string (máx 60 chars, formato "keyword | Annova Tech")
+- "meta_title": string (máx 60 chars, formato "keyword | AnnovaSoft")
 - "meta_description": string (150-160 chars, propuesta de valor + keyword + CTA implícita)
 - "category": string (categoría más apropiada del producto)
 - "brand": string (marca detectada del nombre del producto)
@@ -53,7 +53,7 @@ La descripción HTML debe tener esta estructura EXACTA:
 <h2>Sobre [MARCA]</h2>
 <p>[Historia, posicionamiento, certificaciones, presencia en Colombia. 3-5 oraciones.]</p>
 
-<h2>¿Por qué comprarlo en Annova Tech?</h2>
+<h2>¿Por qué comprarlo en AnnovaSoft?</h2>
 <ul>
 <li>Garantía: ${warranty || '12 meses con fabricante'}</li>
 <li>Soporte técnico pre y post venta sin costo adicional</li>
@@ -64,13 +64,13 @@ La descripción HTML debe tener esta estructura EXACTA:
 
 <h2>Preguntas Frecuentes</h2>
 <h3>¿[Pregunta de compatibilidad técnica]?</h3><p>[Respuesta 2-3 oraciones]</p>
-<h3>¿Qué garantía tiene este producto en Annova Tech?</h3><p>[Respuesta con ${warranty}]</p>
+<h3>¿Qué garantía tiene este producto en AnnovaSoft?</h3><p>[Respuesta con ${warranty}]</p>
 <h3>¿[Pregunta de uso empresarial Colombia]?</h3><p>[Respuesta]</p>
 <h3>¿Hacen envíos a todo Colombia?</h3><p>[Respuesta con tiempos]</p>
 <h3>¿Qué medios de pago aceptan?</h3><p>[Respuesta: Wompi, PSE, Nequi, tarjeta]</p>
 
 <h2>Tu decisión inteligente en tecnología</h2>
-<p>[Cierre: resumen + diferencial Annova Tech + CTA sutil]</p>
+<p>[Cierre: resumen + diferencial AnnovaSoft + CTA sutil]</p>
 
 Las 3 reseñas deben ser de nombres colombianos verosímiles con cargos reales (Gerente TI, Coordinadora de Compras, etc.) y ciudades colombianas reales.
 
@@ -119,9 +119,9 @@ Responde SOLO con JSON válido.`;
     } catch {
       parsed = {
         description: content,
-        short_description: `${productName} disponible en Annova Tech con envío a todo Colombia.`,
-        meta_title: `${productName} | Annova Tech`.slice(0, 60),
-        meta_description: `${productName} disponible en Annova Tech. Envío a todo Colombia. Pago seguro con Wompi.`,
+        short_description: `${productName} disponible en AnnovaSoft con envío a todo Colombia.`,
+        meta_title: `${productName} | AnnovaSoft`.slice(0, 60),
+        meta_description: `${productName} disponible en AnnovaSoft. Envío a todo Colombia. Pago seguro con Wompi.`,
         category: "General",
         brand: "",
         specs: {},

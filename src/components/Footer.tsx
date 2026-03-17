@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company */}
           <div>
-            <h3 className="font-bebas text-2xl mb-4"><span className="text-primary">ANNOVA</span> SOFTWARE</h3>
+            <h3 className="font-bebas text-2xl mb-4"><span className="text-primary">ANNOVA</span>SOFT</h3>
             <p className="text-sm opacity-80 mb-4">Proveedor líder de soluciones tecnológicas empresariales en Colombia. Software, servidores, infraestructura y equipos de cómputo.</p>
             <div className="space-y-2 text-sm opacity-80">
               <p className="flex items-center gap-2"><Phone className="w-4 h-4" /> +57 305 7950550</p>
@@ -44,8 +44,9 @@ export default function Footer() {
               <li><Link to="/blog" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Blog</Link></li>
               <li><Link to="/nosotros" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Nosotros</Link></li>
               <li><Link to="/contacto" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Contáctanos</Link></li>
-              <li><span className="opacity-80">Términos y condiciones</span></li>
-              <li><span className="opacity-80">Política de privacidad</span></li>
+              <li><Link to="/legal" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Términos y Condiciones</Link></li>
+              <li><Link to="/legal" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Política de Cookies</Link></li>
+              <li><Link to="/legal" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Tratamiento de Datos</Link></li>
             </ul>
           </div>
 
@@ -65,7 +66,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-accent-foreground/20 mt-8 pt-6 text-center text-sm opacity-60">
-          <p>© 2025 Annova Software y Accesorios. Todos los derechos reservados.</p>
+          <p>© 2025 Annova Software y Accesorios SAS. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

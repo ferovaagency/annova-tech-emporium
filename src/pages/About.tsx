@@ -6,7 +6,7 @@ export default function About() {
     <main className="py-12">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl md:text-5xl font-bebas text-center mb-4">Sobre <span className="text-primary">Nosotros</span></h1>
-        <p className="text-center text-muted-foreground max-w-2xl mx-auto mb-12">Somos Annova Software y Accesorios, proveedor líder de soluciones tecnológicas empresariales en Colombia.</p>
+        <p className="text-center text-muted-foreground max-w-2xl mx-auto mb-12">Somos Annova Software y Accesorios SAS, proveedor líder de soluciones tecnológicas empresariales en Colombia.</p>
 
         <div className="grid md:grid-cols-2 gap-12 mb-16">
           <div>

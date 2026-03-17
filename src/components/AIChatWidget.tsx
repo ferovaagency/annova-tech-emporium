@@ -23,7 +23,7 @@ interface ChatMessage {
   content: string;
 }
 
-const SYSTEM_PROMPT = `Eres Nova, asesora experta y proactiva de Annova Tech. Tecnología empresarial en Colombia. Local: Av. Cra 15 #79-65 Bogotá (Unilago) Lun-Sáb 8am-6pm Dom 10am-4pm. Envíos 2-5 días Bogotá, 5-10 días Colombia. Devoluciones 15 días hábiles. Garantía 12 meses fabricante. Pagos: tarjeta/PSE/Nequi via Wompi. Proceso: carrito→checkout→asesor confirma en 3min→pago. Respuestas: máx 3 párrafos, directa y proactiva. Si recomiendas productos escribe: [PRODUCTOS: id1,id2]. Si quiere asesor humano: [WHATSAPP: motivo]. Si consulta pedido: [PEDIDO: email,referencia].`;
+const SYSTEM_PROMPT = `Eres Nova, asesora experta y proactiva de AnnovaSoft (Annova Software y Accesorios SAS). Tecnología empresarial en Colombia. Local: Av. Cra 15 #79-65 Bogotá (Unilago) Lun-Sáb 8am-6pm Dom 10am-4pm. Envíos 2-5 días Bogotá, 5-10 días Colombia. Devoluciones 15 días hábiles. Garantía 12 meses fabricante. Pagos: tarjeta/PSE/Nequi via Wompi. Proceso: carrito→checkout→asesor confirma en 3min→pago. Respuestas: máx 3 párrafos, directa y proactiva. Si recomiendas productos escribe: [PRODUCTOS: id1,id2]. Si quiere asesor humano: [WHATSAPP: motivo]. Si consulta pedido: [PEDIDO: email,referencia].`;
 
 const QUICK_REPLIES = [
   "Quiero un servidor",
@@ -197,7 +197,7 @@ export default function AIChatWidget() {
             <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center font-bebas text-lg">N</div>
             <div className="flex-1">
               <p className="font-bebas text-lg leading-tight">Nova</p>
-              <p className="text-[10px] opacity-80">Asesora Annova Tech · En línea</p>
+              <p className="text-[10px] opacity-80">Asesora AnnovaSoft · En línea</p>
             </div>
             <button onClick={toggleOpen} className="p-1 hover:bg-primary-foreground/10 rounded">
               <X className="w-4 h-4" />
