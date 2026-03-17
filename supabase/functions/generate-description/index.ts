@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { productName, price, condition, warranty } = await req.json();
+    const { productName, price, condition, warranty, additionalNotes } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -73,7 +73,10 @@ La descripción HTML debe tener esta estructura EXACTA:
 <p>[Cierre: resumen + diferencial AnnovaSoft + CTA sutil]</p>
 
 Las 3 reseñas deben ser de nombres colombianos verosímiles con cargos reales (Gerente TI, Coordinadora de Compras, etc.) y ciudades colombianas reales.
-
+${additionalNotes ? `
+Información adicional del usuario a considerar:
+${additionalNotes}
+` : ''}
 Responde SOLO con JSON válido.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

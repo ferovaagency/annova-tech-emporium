@@ -17,6 +17,7 @@ import Store from "./pages/Store";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import PaymentResult from "./pages/PaymentResult";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import About from "./pages/About";
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="/producto/:slug" element={<ProductDetail />} />
                 <Route path="/carrito" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/pago-resultado" element={<PaymentResult />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/nosotros" element={<About />} />

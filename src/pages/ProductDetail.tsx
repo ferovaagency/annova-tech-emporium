@@ -183,13 +183,13 @@ export default function ProductDetail() {
           {/* Gallery */}
           <div>
             <div className="bg-muted rounded-xl overflow-hidden mb-4">
-              <img src={images[selectedImage]} alt={product.name} className="w-full aspect-square object-contain p-8" />
+              <img src={images[selectedImage]} alt={`${product.name} - imagen ${selectedImage + 1} | AnnovaSoft`} title={product.name} className="w-full aspect-square object-contain p-8" />
             </div>
             {images.length > 1 && (
               <div className="flex gap-2">
                 {images.map((img, i) => (
-                  <button key={i} onClick={() => setSelectedImage(i)} className={`w-20 h-20 rounded-lg border-2 overflow-hidden ${i === selectedImage ? 'border-primary' : 'border-transparent'}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  <button key={i} onClick={() => setSelectedImage(i)} className={`w-20 h-20 rounded-lg border-2 overflow-hidden ${i === selectedImage ? 'border-primary' : 'border-transparent'}`} title={`${product.name} imagen ${i + 1}`}>
+                    <img src={img} alt={`${product.name} - imagen ${i + 1} | AnnovaSoft`} title={product.name} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
