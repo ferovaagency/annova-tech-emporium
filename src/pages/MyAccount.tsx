@@ -3,19 +3,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Package } from 'lucide-react';
+import { Loader2, Package, Search } from 'lucide-react';
 import { formatPrice } from '@/data/products';
+
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
 
 interface OrderResult {
   id: string;
-  order_id: string;
+  reference: string;
   customer_name: string;
   customer_email: string;
-  items: Array<{ name: string; quantity: number; price: number }>;
+  items: OrderItem[];
   total: number;
   status: string;
-  admin_notes: string | null;
   created_at: string;
+  admin_notes?: string | null;
 }
 
 export default function MyAccount() {
@@ -31,61 +37,111 @@ export default function MyAccount() {
     setNotFound(false);
     setResult(null);
 
-    const { data, error } = await supabase
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedReference = reference.trim();
+
+    const { data: orderData } = await supabase
+      .from('orders')
+      .select('id, reference, customer_name, customer_email, items, total, status, created_at')
+      .eq('customer_email', normalizedEmail)
+      .eq('reference', normalizedReference)
+      .maybeSingle();
+
+    if (orderData) {
+      setResult(orderData as unknown as OrderResult);
+      setLoading(false);
+      return;
+    }
+
+    const { data: availabilityData } = await supabase
       .from('availability_requests')
       .select('*')
-      .eq('customer_email', email)
-      .eq('order_id', reference)
-      .single();
+      .eq('customer_email', normalizedEmail)
+      .eq('order_id', normalizedReference)
+      .maybeSingle();
 
-    if (error || !data) {
+    if (!availabilityData) {
       setNotFound(true);
     } else {
-      setResult(data as unknown as OrderResult);
+      setResult({
+        id: availabilityData.id,
+        reference: availabilityData.order_id,
+        customer_name: availabilityData.customer_name,
+        customer_email: availabilityData.customer_email,
+        items: ((availabilityData.items as unknown) || []) as OrderItem[],
+        total: Number(availabilityData.total || 0),
+        status: availabilityData.status,
+        created_at: availabilityData.created_at,
+        admin_notes: availabilityData.admin_notes,
+      });
     }
+
     setLoading(false);
   };
 
-  const statusConfig: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Pendiente', color: 'bg-yellow-500' },
-    available: { label: 'Disponibilidad confirmada', color: 'bg-blue-500' },
-    unavailable: { label: 'No disponible', color: 'bg-red-500' },
+  const statusConfig: Record<string, string> = {
+    pending: 'bg-yellow-500 text-white',
+    available: 'bg-blue-500 text-white',
+    unavailable: 'bg-red-500 text-white',
+    paid: 'bg-blue-600 text-white',
+    shipped: 'bg-orange-500 text-white',
+    delivered: 'bg-green-600 text-white',
+    cancelled: 'bg-red-600 text-white',
+  };
+
+  const statusLabel: Record<string, string> = {
+    pending: 'Pendiente',
+    available: 'Disponibilidad confirmada',
+    unavailable: 'No disponible',
+    paid: 'Pagado',
+    shipped: 'Enviado',
+    delivered: 'Entregado',
+    cancelled: 'Cancelado',
   };
 
   return (
     <main className="py-12">
-      <div className="container mx-auto px-4 max-w-lg">
-        <div className="text-center mb-8">
-          <Package className="w-12 h-12 text-primary mx-auto mb-3" />
+      <div className="container mx-auto max-w-lg px-4">
+        <div className="mb-8 text-center">
+          <Package className="mx-auto mb-3 h-12 w-12 text-primary" />
           <h1 className="text-3xl font-bebas">Consulta tu <span className="text-primary">Pedido</span></h1>
-          <p className="text-muted-foreground text-sm mt-2">Ingresa tu email y número de referencia para ver el estado de tu pedido.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Ingresa tu email y el código de pedido para ver el estado actualizado.</p>
         </div>
 
-        <form onSubmit={handleSearch} className="space-y-4 mb-8">
-          <Input placeholder="Email" type="email" required value={email} onChange={e => setEmail(e.target.value)} />
-          <Input placeholder="Número de pedido (referencia)" required value={reference} onChange={e => setReference(e.target.value)} />
+        <form onSubmit={handleSearch} className="mb-8 space-y-4">
+          <Input placeholder="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input placeholder="Código de pedido / referencia" required value={reference} onChange={(e) => setReference(e.target.value)} />
           <Button type="submit" className="w-full bg-primary text-primary-foreground" disabled={loading}>
-            <Search className="w-4 h-4 mr-2" /> Buscar pedido
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+            {loading ? 'Buscando...' : 'Buscar pedido'}
           </Button>
         </form>
 
         {notFound && (
-          <div className="text-center py-8 bg-muted rounded-lg">
-            <p className="text-muted-foreground">No encontramos un pedido con esos datos. Verifica tu email y número de pedido.</p>
+          <div className="rounded-lg bg-muted py-8 text-center">
+            <p className="text-muted-foreground">No encontramos un pedido con esos datos. Verifica tu email y tu código de pedido.</p>
           </div>
         )}
 
         {result && (
-          <div className="bg-card border rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs text-muted-foreground">Ref: {result.order_id}</span>
-              <Badge className={`${statusConfig[result.status]?.color || 'bg-gray-500'} text-white`}>
-                {statusConfig[result.status]?.label || result.status}
+          <div className="rounded-lg border bg-card p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <span className="text-xs text-muted-foreground">Ref: {result.reference}</span>
+              <Badge className={statusConfig[result.status] || 'bg-muted-foreground text-white'}>
+                {statusLabel[result.status] || result.status}
               </Badge>
             </div>
-            <p className="font-medium text-sm mb-1">{result.customer_name}</p>
-            <p className="text-xs text-muted-foreground mb-4">{new Date(result.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-            <div className="space-y-2 mb-4">
+            <p className="mb-1 text-sm font-medium">{result.customer_name}</p>
+            <p className="mb-4 text-xs text-muted-foreground">
+              {new Date(result.created_at).toLocaleDateString('es-CO', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+            <div className="mb-4 space-y-2">
               {(result.items || []).map((item, i) => (
                 <div key={i} className="flex justify-between text-sm">
                   <span>{item.name} x{item.quantity}</span>
@@ -93,13 +149,13 @@ export default function MyAccount() {
                 </div>
               ))}
             </div>
-            <div className="border-t pt-3 flex justify-between font-bold">
+            <div className="flex justify-between border-t pt-3 font-bold">
               <span>Total</span>
-              <span className="text-primary">{formatPrice(result.total)}</span>
+              <span className="text-primary">{formatPrice(Number(result.total || 0))}</span>
             </div>
             {result.admin_notes && (
-              <div className="mt-4 bg-muted rounded-lg p-3 text-sm">
-                <p className="font-medium mb-1">Nota del asesor:</p>
+              <div className="mt-4 rounded-lg bg-muted p-3 text-sm">
+                <p className="mb-1 font-medium">Nota del asesor:</p>
                 <p className="text-muted-foreground">{result.admin_notes}</p>
               </div>
             )}
