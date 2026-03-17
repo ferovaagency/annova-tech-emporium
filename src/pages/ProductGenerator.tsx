@@ -133,10 +133,32 @@ export default function ProductGenerator() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const addImageUrl = () => {
+  const downloadAndUploadImage = async (imageUrl: string): Promise<string> => {
+    try {
+      const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(imageUrl)}`);
+      if (!response.ok) throw new Error('No se pudo descargar la imagen');
+      const blob = await response.blob();
+      const extension = imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
+      const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+      const ext = validExtensions.includes(extension.toLowerCase()) ? extension.toLowerCase() : 'jpg';
+      const filename = `product-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from('product-images').upload(filename, blob, { contentType: blob.type || 'image/jpeg', upsert: false });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filename);
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error descargando imagen:', error);
+      return imageUrl;
+    }
+  };
+
+  const addImageUrl = async () => {
     if (imageUrlInput.trim()) {
-      setImageUrls(prev => [...prev, imageUrlInput.trim()]);
+      setUploadingImage(true);
+      const uploaded = await downloadAndUploadImage(imageUrlInput.trim());
+      setImageUrls(prev => [...prev, uploaded]);
       setImageUrlInput('');
+      setUploadingImage(false);
     }
   };
 
