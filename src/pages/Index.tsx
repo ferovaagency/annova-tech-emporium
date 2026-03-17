@@ -59,7 +59,7 @@ export default function Index() {
               <a href={getWhatsAppUrl('Necesito cotización empresarial de AnnovaSoft')} target="_blank" rel="noopener noreferrer" className="border-2 border-accent-foreground/30 text-accent-foreground font-semibold px-8 py-3 rounded-lg text-lg hover:border-accent-foreground/60 transition-colors">Cotizar</a>
             </div>
           </div>
-          <div className="flex-1 relative"><img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop" alt="Infraestructura tecnológica empresarial" className="rounded-2xl shadow-2xl w-full max-w-lg mx-auto" /></div>
+          <div className="flex-1 relative"><img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop" alt="Infraestructura tecnológica empresarial AnnovaSoft tecnología empresarial Colombia" title="Infraestructura tecnológica empresarial" className="rounded-2xl shadow-2xl w-full max-w-lg mx-auto" /></div>
         </div>
       </section>
 
