@@ -2,3 +2,6 @@ project_id = "ttsrhjizgcczldxjlsbc"
 
 [functions.generate-description]
 verify_jwt = false
+
+[functions.nova-chat]
+verify_jwt = false
