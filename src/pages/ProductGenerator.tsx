@@ -97,7 +97,7 @@ export default function ProductGenerator() {
     setShortDesc(''); setDescription(''); setSpecsText('');
     setCategory(''); setBrand('');
     setMetaTitle(''); setMetaDesc('');
-    setImageUrls([]); setReviews([]);
+    setImageUrls([]); setReviews([]); setAiNotes('');
   };
 
   const loadProduct = (p: DBProduct) => {
