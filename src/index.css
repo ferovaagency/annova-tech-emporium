@@ -92,16 +92,30 @@
 }
 
 /* Product description HTML styles */
-.product-description h2 { font-size: 1.35rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem; color: #111; border-bottom: 2px solid #CC0000; padding-bottom: 0.4rem; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+.product-description h2 { font-size: 1.35rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem; color: hsl(220 50% 5%); border-bottom: 2px solid hsl(0 100% 40%); padding-bottom: 0.4rem; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
 .product-description h2:first-child { margin-top: 0; }
-.product-description h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #333; font-family: 'Montserrat', sans-serif; }
-.product-description h4 { font-size: 0.95rem; font-weight: 500; margin-top: 0.75rem; color: #555; font-family: 'Montserrat', sans-serif; }
-.product-description p { line-height: 1.75; margin-bottom: 1rem; color: #444; font-family: 'Montserrat', sans-serif; }
-.product-description strong { color: #111; }
+.product-description h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: hsl(215 16% 20%); font-family: 'Montserrat', sans-serif; }
+.product-description h4 { font-size: 0.95rem; font-weight: 500; margin-top: 0.75rem; color: hsl(215 14% 35%); font-family: 'Montserrat', sans-serif; }
+.product-description p { line-height: 1.75; margin-bottom: 1rem; color: hsl(215 12% 28%); font-family: 'Montserrat', sans-serif; }
+.product-description strong { color: hsl(220 50% 5%); }
 .product-description ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-.product-description ul li { margin-bottom: 0.4rem; line-height: 1.6; color: #444; font-family: 'Montserrat', sans-serif; }
+.product-description ul li { margin-bottom: 0.4rem; line-height: 1.6; color: hsl(215 12% 28%); font-family: 'Montserrat', sans-serif; }
 .product-description table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; overflow-x: auto; display: block; }
-.product-description table th { background: #111; color: white; padding: 0.6rem 1rem; text-align: left; white-space: nowrap; }
-.product-description table td { padding: 0.5rem 1rem; border-bottom: 1px solid #e5e7eb; }
-.product-description table tr:nth-child(even) td { background: #f9fafb; }
-.product-description blockquote { border-left: 4px solid #CC0000; padding: 1rem 1.5rem; background: #fafafa; margin: 1.5rem 0; font-style: italic; color: #555; border-radius: 0 8px 8px 0; }
+.product-description table th { background: hsl(220 50% 5%); color: hsl(0 0% 100%); padding: 0.6rem 1rem; text-align: left; white-space: nowrap; }
+.product-description table td { padding: 0.5rem 1rem; border-bottom: 1px solid hsl(214 32% 91%); }
+.product-description table tr:nth-child(even) td { background: hsl(210 20% 98%); }
+.product-description blockquote { border-left: 4px solid hsl(0 100% 40%); padding: 1rem 1.5rem; background: hsl(210 20% 98%); margin: 1.5rem 0; font-style: italic; color: hsl(215 14% 35%); border-radius: 0 8px 8px 0; }
+
+.blog-content h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: hsl(220 50% 5%); }
+.blog-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 1rem; color: hsl(220 50% 5%); border-bottom: 2px solid hsl(0 100% 40%); padding-bottom: 0.5rem; }
+.blog-content h3 { font-size: 1.2rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: hsl(215 16% 20%); }
+.blog-content h4 { font-size: 1rem; font-weight: 600; margin-top: 1rem; color: hsl(215 14% 35%); }
+.blog-content p { line-height: 1.8; margin-bottom: 1.25rem; color: hsl(215 12% 28%); }
+.blog-content ul, .blog-content ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.blog-content li { margin-bottom: 0.5rem; line-height: 1.7; color: hsl(215 12% 28%); }
+.blog-content .blog-product-link { color: hsl(0 100% 40%); font-weight: 600; text-decoration: underline; }
+.blog-content .blog-whatsapp-link { color: hsl(142 70% 40%); font-weight: 600; text-decoration: underline; }
+.blog-content blockquote { border-left: 4px solid hsl(0 100% 40%); padding: 1rem 1.5rem; background: hsl(210 20% 98%); margin: 1.5rem 0; font-style: italic; border-radius: 0 8px 8px 0; }
+.blog-content table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+.blog-content th { background: hsl(220 50% 5%); color: hsl(0 0% 100%); padding: 0.75rem 1rem; text-align: left; }
+.blog-content td { border-bottom: 1px solid hsl(214 32% 91%); padding: 0.75rem 1rem; }

@@ -10,6 +10,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { mapDbProduct } from '@/lib/catalog';
 import { useActiveCategories } from '@/hooks/useActiveCategories';
 
+function CategoryBadgeVisual({ name, image }: { name: string; image?: string }) {
+  const hasRealImage = Boolean(image && image.trim() && image !== '/placeholder.svg');
+  if (!hasRealImage) return <div className="rounded-lg bg-gradient-to-r from-primary via-accent to-accent px-3 py-2 text-center text-xs font-semibold text-primary-foreground">{name}</div>;
+  return <div className="rounded-lg border bg-muted px-3 py-2 text-xs font-semibold">{name}</div>;
+}
+
 export default function Store() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { categories } = useActiveCategories();
@@ -73,65 +79,15 @@ export default function Store() {
           </div>
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 rounded-lg border px-4 py-2 text-sm lg:hidden" onClick={() => setShowFilters(!showFilters)}><SlidersHorizontal className="h-4 w-4" /> Filtros</button>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="relevancia">Relevancia</SelectItem>
-                <SelectItem value="precio-asc">Precio: menor a mayor</SelectItem>
-                <SelectItem value="precio-desc">Precio: mayor a menor</SelectItem>
-                <SelectItem value="nombre">Nombre A-Z</SelectItem>
-              </SelectContent>
-            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}><SelectTrigger className="w-48"><SelectValue placeholder="Ordenar por" /></SelectTrigger><SelectContent><SelectItem value="relevancia">Relevancia</SelectItem><SelectItem value="precio-asc">Precio: menor a mayor</SelectItem><SelectItem value="precio-desc">Precio: mayor a menor</SelectItem><SelectItem value="nombre">Nombre A-Z</SelectItem></SelectContent></Select>
           </div>
         </div>
 
-        {(categoryFilter || conditionFilter || brandFilter || searchQuery) && (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {activeCategory && <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearchParams({})}>{activeCategory.name} <X className="ml-1 h-3 w-3" /></Badge>}
-            {conditionFilter && <Badge variant="secondary" className="cursor-pointer" onClick={() => setConditionFilter('')}>{conditionFilter} <X className="ml-1 h-3 w-3" /></Badge>}
-            {brandFilter && <Badge variant="secondary" className="cursor-pointer" onClick={() => setBrandFilter('')}>{brandFilter} <X className="ml-1 h-3 w-3" /></Badge>}
-            <button className="text-sm text-primary hover:underline" onClick={clearFilters}>Limpiar todo</button>
-          </div>
-        )}
+        {(categoryFilter || conditionFilter || brandFilter || searchQuery) && <div className="mb-4 flex flex-wrap gap-2">{activeCategory && <button onClick={() => setSearchParams({})}><CategoryBadgeVisual name={activeCategory.name} image={activeCategory.image} /></button>}{conditionFilter && <Badge variant="secondary" className="cursor-pointer" onClick={() => setConditionFilter('')}>{conditionFilter} <X className="ml-1 h-3 w-3" /></Badge>}{brandFilter && <Badge variant="secondary" className="cursor-pointer" onClick={() => setBrandFilter('')}>{brandFilter} <X className="ml-1 h-3 w-3" /></Badge>}<button className="text-sm text-primary hover:underline" onClick={clearFilters}>Limpiar todo</button></div>}
 
         <div className="flex gap-8">
-          <aside className={`${showFilters ? 'block' : 'hidden'} w-full flex-shrink-0 lg:block lg:w-64`}>
-            <div className="sticky top-40 space-y-6 rounded-lg border bg-card p-4">
-              <div>
-                <h3 className="mb-3 font-montserrat text-sm font-semibold">Categoría</h3>
-                <div className="space-y-2">
-                  {categories.map((cat) => (
-                    <button key={cat.slug} onClick={() => setSearchParams({ categoria: cat.slug })} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${categoryFilter === cat.slug ? 'bg-muted font-semibold text-primary' : ''}`}>{cat.name}</button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h3 className="mb-3 font-montserrat text-sm font-semibold">Condición</h3>
-                <div className="space-y-2">{['Nuevo', 'Reacondicionado'].map((c) => <button key={c} onClick={() => setConditionFilter(conditionFilter === c ? '' : c)} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${conditionFilter === c ? 'bg-muted font-semibold text-primary' : ''}`}>{c}</button>)}</div>
-              </div>
-              <div>
-                <h3 className="mb-3 font-montserrat text-sm font-semibold">Marca</h3>
-                <div className="space-y-2">{brands.map((b) => <button key={b} onClick={() => setBrandFilter(brandFilter === b ? '' : b)} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${brandFilter === b ? 'bg-muted font-semibold text-primary' : ''}`}>{b}</button>)}</div>
-              </div>
-              <div>
-                <h3 className="mb-3 font-montserrat text-sm font-semibold">Rango de precio</h3>
-                <Slider value={priceRange} onValueChange={setPriceRange} min={0} max={15000000} step={100000} className="mt-2" />
-              </div>
-            </div>
-          </aside>
-
-          <div className="flex-1">
-            {loadingDb ? (
-              <div className="py-16 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /></div>
-            ) : filtered.length === 0 ? (
-              <div className="py-16 text-center">
-                <p className="mb-4 text-xl font-bebas text-muted-foreground">No hay productos con este filtro</p>
-                <button onClick={clearFilters} className="text-primary hover:underline">Limpiar filtros</button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">{filtered.map((p) => <ProductCard key={p.id} product={p} />)}</div>
-            )}
-          </div>
+          <aside className={`${showFilters ? 'block' : 'hidden'} w-full flex-shrink-0 lg:block lg:w-64`}><div className="sticky top-40 space-y-6 rounded-lg border bg-card p-4"><div><h3 className="mb-3 font-montserrat text-sm font-semibold">Categoría</h3><div className="space-y-2">{categories.map((cat) => <button key={cat.slug} onClick={() => setSearchParams({ categoria: cat.slug })} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${categoryFilter === cat.slug ? 'bg-muted font-semibold text-primary' : ''}`}>{cat.name}</button>)}</div></div><div><h3 className="mb-3 font-montserrat text-sm font-semibold">Condición</h3><div className="space-y-2">{['Nuevo', 'Reacondicionado'].map((c) => <button key={c} onClick={() => setConditionFilter(conditionFilter === c ? '' : c)} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${conditionFilter === c ? 'bg-muted font-semibold text-primary' : ''}`}>{c}</button>)}</div></div><div><h3 className="mb-3 font-montserrat text-sm font-semibold">Marca</h3><div className="space-y-2">{brands.map((b) => <button key={b} onClick={() => setBrandFilter(brandFilter === b ? '' : b)} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${brandFilter === b ? 'bg-muted font-semibold text-primary' : ''}`}>{b}</button>)}</div></div><div><h3 className="mb-3 font-montserrat text-sm font-semibold">Rango de precio</h3><Slider value={priceRange} onValueChange={setPriceRange} min={0} max={15000000} step={100000} className="mt-2" /></div></div></aside>
+          <div className="flex-1">{loadingDb ? <div className="py-16 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /></div> : filtered.length === 0 ? <div className="py-16 text-center"><p className="mb-4 text-xl font-bebas text-muted-foreground">No hay productos con este filtro</p><button onClick={clearFilters} className="text-primary hover:underline">Limpiar filtros</button></div> : <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">{filtered.map((p) => <ProductCard key={p.id} product={p} />)}</div>}</div>
         </div>
       </div>
     </main>

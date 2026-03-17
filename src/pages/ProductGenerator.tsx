@@ -1,4 +1,3 @@
-// TODO: Add authentication/authorization for admin access
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/products';
@@ -12,450 +11,67 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, X, Sparkles, Eye, Pencil, Plus, Trash2, ToggleLeft, ToggleRight, Search } from 'lucide-react';
 
-interface DBProduct {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  sale_price: number | null;
-  sku: string | null;
-  category: string | null;
-  brand: string | null;
-  stock: number | null;
-  short_description: string | null;
-  description: string | null;
-  specs: Record<string, string> | null;
-  meta_title: string | null;
-  meta_description: string | null;
-  images: string[] | null;
-  active: boolean | null;
-  condition: string | null;
-  warranty: string | null;
-  reviews: Array<{ author: string; role: string; text: string; rating: number }> | null;
-}
+interface DBProduct { id: string; name: string; slug: string; price: number; sale_price: number | null; sku: string | null; category: string | null; brand: string | null; stock: number | null; short_description: string | null; description: string | null; specs: Record<string, string> | null; meta_title: string | null; meta_description: string | null; images: string[] | null; active: boolean | null; condition: string | null; warranty: string | null; reviews: Array<{ author: string; role: string; text: string; rating: number }> | null; }
+interface BlogPostRow { id: string; title: string; slug: string; content: string | null; excerpt: string | null; cover_image: string | null; meta_title: string | null; meta_description: string | null; status: string; active: boolean; created_at: string; author: string | null; }
+const WARRANTY_OPTIONS = ['6 meses con fabricante', '12 meses con fabricante', '24 meses con fabricante', '6 meses con AnnovaSoft', '12 meses con AnnovaSoft', 'Sin garantía'];
+const BLOG_TYPES: Record<string, string> = { '2000': 'Guía completa (2000+ palabras)', '1200': 'Artículo informativo (1200 palabras)', '800': 'Post rápido (800 palabras)' };
 
-const WARRANTY_OPTIONS = [
-  '6 meses con fabricante',
-  '12 meses con fabricante',
-  '24 meses con fabricante',
-  '6 meses con AnnovaSoft',
-  '12 meses con AnnovaSoft',
-  'Sin garantía',
-];
+function extractMeta(html: string, key: string) { const match = html.match(new RegExp(`<!--\\s*${key}:([\\s\\S]*?)-->`, 'i')); return match?.[1]?.trim() || ''; }
+function extractH1(html: string) { const match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i); return match?.[1]?.replace(/<[^>]+>/g, '').trim() || ''; }
 
 export default function ProductGenerator() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState('productos');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [salePrice, setSalePrice] = useState('');
-  const [sku, setSku] = useState('');
-  const [condition, setCondition] = useState('Nuevo');
-  const [warranty, setWarranty] = useState('12 meses con fabricante');
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [imageUrlInput, setImageUrlInput] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [shortDesc, setShortDesc] = useState('');
-  const [description, setDescription] = useState('');
-  const [specsText, setSpecsText] = useState('');
-  const [category, setCategory] = useState('');
-  const [brand, setBrand] = useState('');
-  const [metaTitle, setMetaTitle] = useState('');
-  const [metaDesc, setMetaDesc] = useState('');
-  const [reviews, setReviews] = useState<Array<{ author: string; role: string; text: string; rating: number }>>([]);
-  const [products, setProducts] = useState<DBProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [generatingAI, setGeneratingAI] = useState(false);
-  const [aiNotes, setAiNotes] = useState('');
-  const [productSearch, setProductSearch] = useState('');
+  const [name, setName] = useState(''); const [price, setPrice] = useState(''); const [salePrice, setSalePrice] = useState(''); const [sku, setSku] = useState(''); const [condition, setCondition] = useState('Nuevo'); const [warranty, setWarranty] = useState('12 meses con fabricante');
+  const [imageUrls, setImageUrls] = useState<string[]>([]); const [imageUrlInput, setImageUrlInput] = useState(''); const [uploadingImage, setUploadingImage] = useState(false); const [shortDesc, setShortDesc] = useState(''); const [description, setDescription] = useState(''); const [specsText, setSpecsText] = useState(''); const [category, setCategory] = useState(''); const [brand, setBrand] = useState(''); const [metaTitle, setMetaTitle] = useState(''); const [metaDesc, setMetaDesc] = useState(''); const [reviews, setReviews] = useState<Array<{ author: string; role: string; text: string; rating: number }>>([]); const [products, setProducts] = useState<DBProduct[]>([]); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [generatingAI, setGeneratingAI] = useState(false); const [aiNotes, setAiNotes] = useState(''); const [productSearch, setProductSearch] = useState('');
+  const [blogTopic, setBlogTopic] = useState(''); const [blogKeywords, setBlogKeywords] = useState(''); const [blogIndustry, setBlogIndustry] = useState('General'); const [blogNotes, setBlogNotes] = useState(''); const [blogType, setBlogType] = useState('1200'); const [blogHtml, setBlogHtml] = useState(''); const [blogMetaTitle, setBlogMetaTitle] = useState(''); const [blogMetaDescription, setBlogMetaDescription] = useState(''); const [blogSlug, setBlogSlug] = useState(''); const [blogExcerpt, setBlogExcerpt] = useState(''); const [generatingBlog, setGeneratingBlog] = useState(false); const [savingBlog, setSavingBlog] = useState(false); const [blogPosts, setBlogPosts] = useState<BlogPostRow[]>([]); const [editingBlog, setEditingBlog] = useState<BlogPostRow | null>(null);
 
   const slug = generateSlug(name);
-
-  const fetchData = useCallback(async () => {
-    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (data) setProducts(data as unknown as DBProduct[]);
-    setLoading(false);
-  }, []);
-
+  const fetchData = useCallback(async () => { const [productsRes, postsRes] = await Promise.all([supabase.from('products').select('*').order('created_at', { ascending: false }), (supabase as any).from('blog_posts').select('*').order('created_at', { ascending: false })]); if (productsRes.data) setProducts(productsRes.data as unknown as DBProduct[]); if (postsRes.data) setBlogPosts(postsRes.data as BlogPostRow[]); setLoading(false); }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const resetForm = () => {
-    setEditingId(null);
-    setName('');
-    setPrice('');
-    setSalePrice('');
-    setSku('');
-    setCondition('Nuevo');
-    setWarranty('12 meses con fabricante');
-    setShortDesc('');
-    setDescription('');
-    setSpecsText('');
-    setCategory('');
-    setBrand('');
-    setMetaTitle('');
-    setMetaDesc('');
-    setImageUrls([]);
-    setReviews([]);
-    setAiNotes('');
-  };
+  const resetForm = () => { setEditingId(null); setName(''); setPrice(''); setSalePrice(''); setSku(''); setCondition('Nuevo'); setWarranty('12 meses con fabricante'); setShortDesc(''); setDescription(''); setSpecsText(''); setCategory(''); setBrand(''); setMetaTitle(''); setMetaDesc(''); setImageUrls([]); setReviews([]); setAiNotes(''); };
+  const loadProduct = (p: DBProduct) => { setEditingId(p.id); setName(p.name); setPrice(String(p.price)); setSalePrice(p.sale_price ? String(p.sale_price) : ''); setSku(p.sku || ''); setCondition(p.condition || 'Nuevo'); setWarranty(p.warranty || '12 meses con fabricante'); setShortDesc(p.short_description || ''); setDescription(p.description || ''); setSpecsText(p.specs ? Object.entries(p.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : ''); setCategory(p.category || ''); setBrand(p.brand || ''); setMetaTitle(p.meta_title || ''); setMetaDesc(p.meta_description || ''); setImageUrls((p.images || []).filter((img): img is string => typeof img === 'string')); setReviews(p.reviews || []); window.scrollTo({ top: 0, behavior: 'smooth' }); setTab('productos'); };
+  const parseSpecs = (text: string): Record<string, string> => { const specs: Record<string, string> = {}; text.split('\n').forEach((line) => { const idx = line.indexOf(':'); if (idx > 0) specs[line.slice(0, idx).trim()] = line.slice(idx + 1).trim(); }); return specs; };
 
-  const loadProduct = (p: DBProduct) => {
-    setEditingId(p.id);
-    setName(p.name);
-    setPrice(String(p.price));
-    setSalePrice(p.sale_price ? String(p.sale_price) : '');
-    setSku(p.sku || '');
-    setCondition(p.condition || 'Nuevo');
-    setWarranty(p.warranty || '12 meses con fabricante');
-    setShortDesc(p.short_description || '');
-    setDescription(p.description || '');
-    setSpecsText(p.specs ? Object.entries(p.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '');
-    setCategory(p.category || '');
-    setBrand(p.brand || '');
-    setMetaTitle(p.meta_title || '');
-    setMetaDesc(p.meta_description || '');
-    setImageUrls(p.images || []);
-    setReviews(p.reviews || []);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    setUploadingImage(true);
-    for (const file of Array.from(files)) {
-      const ext = file.name.split('.').pop();
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from('product-images').upload(path, file);
-      if (!error) {
-        const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-        setImageUrls((prev) => [...prev, urlData.publicUrl]);
-      }
-    }
-    setUploadingImage(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const downloadAndUpload = async (url: string): Promise<string> => {
-    try {
-      const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-      const blob = await res.blob();
-      const ext = ['jpg', 'jpeg', 'png', 'webp'].find((e) => url.toLowerCase().includes(`.${e}`)) || 'jpg';
-      const name = `product-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
-      await supabase.storage.from('product-images').upload(name, blob, { contentType: blob.type });
-      return supabase.storage.from('product-images').getPublicUrl(name).data.publicUrl;
-    } catch {
-      return url;
-    }
-  };
-
-  const addImageUrl = async () => {
-    if (!imageUrlInput.trim()) return;
-    setImageUrls((prev) => [...prev, imageUrlInput.trim()]);
-    setImageUrlInput('');
-  };
-
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => { const files = e.target.files; if (!files) return; setUploadingImage(true); for (const file of Array.from(files)) { const ext = file.name.split('.').pop() || 'jpg'; const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`; const { error } = await supabase.storage.from('product-images').upload(path, file, { contentType: file.type }); if (!error) { const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path); setImageUrls((prev) => [...prev, urlData.publicUrl]); } } setUploadingImage(false); if (fileInputRef.current) fileInputRef.current.value = ''; };
+  const downloadAndUpload = async (url: string): Promise<string> => { try { const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`); const blob = await res.blob(); const ext = ['jpg','jpeg','png','webp'].find(e => url.toLowerCase().includes('.'+e)) || 'jpg'; const name = `product-${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`; await supabase.storage.from('product-images').upload(name, blob, { contentType: blob.type }); return supabase.storage.from('product-images').getPublicUrl(name).data.publicUrl; } catch { return url; } };
+  const addImageUrl = async () => { if (!imageUrlInput.trim()) return; setImageUrls((prev) => [...prev, imageUrlInput.trim()]); setImageUrlInput(''); };
   const removeImage = (idx: number) => setImageUrls((prev) => prev.filter((_, i) => i !== idx));
 
-  const parseSpecs = (text: string): Record<string, string> => {
-    const specs: Record<string, string> = {};
-    text.split('\n').forEach((line) => {
-      const idx = line.indexOf(':');
-      if (idx > 0) specs[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
-    });
-    return specs;
+  const handleGenerateAI = async () => { if (!name) return toast({ title: 'Ingresa el nombre del producto primero', variant: 'destructive' }); setGeneratingAI(true); try { const { data, error } = await supabase.functions.invoke('generate-description', { body: { productName: name, price: price ? Number(price) : null, condition, warranty, additionalNotes: aiNotes || null } }); if (error) throw error; if (data.description) setDescription(data.description); if (data.meta_title) setMetaTitle(data.meta_title); if (data.meta_description) setMetaDesc(data.meta_description); if (data.short_description) setShortDesc(data.short_description); if (data.category) setCategory(data.category); if (data.brand) setBrand(data.brand); if (data.specs) setSpecsText(Object.entries(data.specs as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join('\n')); if (data.reviews && Array.isArray(data.reviews)) setReviews(data.reviews); toast({ title: 'Contenido generado con IA exitosamente' }); } catch (err: any) { toast({ title: 'Error al generar contenido', description: err.message, variant: 'destructive' }); } setGeneratingAI(false); };
+  const handleSave = async () => { if (!name || !price) return toast({ title: 'Nombre y precio son requeridos', variant: 'destructive' }); if (imageUrls.length === 0) return toast({ title: 'Agrega al menos una imagen', variant: 'destructive' }); setSaving(true); let finalSlug = slug; if (!editingId) { let suffix = 1; let slugExists = true; while (slugExists) { const checkSlug = suffix === 1 ? finalSlug : `${finalSlug}-${suffix}`; const { data } = await supabase.from('products').select('id').eq('slug', checkSlug).maybeSingle(); if (!data) { finalSlug = checkSlug; slugExists = false; } else suffix++; } }
+    const normalizedImages = (await Promise.all(imageUrls.map((url) => isExternalImageUrl(url) ? downloadAndUpload(url) : Promise.resolve(url)))).filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+    if (category) await supabase.from('categories').upsert({ name: category, slug: generateSlug(category) }, { onConflict: 'name' }); if (brand) await supabase.from('brands').upsert({ name: brand }, { onConflict: 'name' });
+    const productData = { name, slug: finalSlug, price: Number(price), sale_price: salePrice ? Number(salePrice) : null, sku: sku || null, category: category || null, brand: brand || null, condition, warranty, short_description: shortDesc || null, description: description || null, specs: Object.keys(parseSpecs(specsText)).length > 0 ? parseSpecs(specsText) : null, meta_title: metaTitle || null, meta_description: metaDesc || null, images: normalizedImages, reviews: reviews.length > 0 ? reviews : null, active: true, updated_at: new Date().toISOString() };
+    let error; if (editingId) ({ error } = await supabase.from('products').update(productData).eq('id', editingId)); else ({ error } = await supabase.from('products').insert(productData));
+    if (error) toast({ title: 'Error al guardar', description: error.message, variant: 'destructive' }); else { toast({ title: editingId ? 'Producto actualizado' : 'Producto creado' }); resetForm(); fetchData(); } setSaving(false); };
+  const handleToggleActive = async (product: DBProduct) => { await supabase.from('products').update({ active: !product.active, updated_at: new Date().toISOString() }).eq('id', product.id); fetchData(); };
+  const handleDeleteProduct = async (product: DBProduct) => { if (!confirm(`¿Eliminar '${product.name}'? Esta acción no se puede deshacer.`)) return; const { error } = await supabase.from('products').delete().eq('id', product.id); if (error) toast({ title: 'Error al eliminar', description: error.message, variant: 'destructive' }); else { toast({ title: 'Producto eliminado' }); fetchData(); } };
+
+  const filteredProducts = useMemo(() => { const query = productSearch.trim().toLowerCase(); if (!query) return products; return products.filter((product) => product.name.toLowerCase().includes(query)); }, [products, productSearch]);
+  const filteredBlogPosts = useMemo(() => blogPosts.filter((post) => `${post.title} ${post.slug}`.toLowerCase().includes(productSearch.toLowerCase())), [blogPosts, productSearch]);
+
+  const generateBlog = async () => {
+    if (!blogTopic || !blogKeywords) return toast({ title: 'Tema y keywords son requeridos', variant: 'destructive' });
+    setGeneratingBlog(true);
+    const catalog = products.slice(0, 30).map((p) => `- ${p.name} | slug:${p.slug} | categoria:${p.category || 'General'}`).join('\n');
+    const prompt = `Tema: ${blogTopic}\nPalabras clave SEO: ${blogKeywords}\nIndustria/público objetivo: ${blogIndustry}\nNotas adicionales: ${blogNotes || 'Ninguna'}\nTipo de artículo: ${BLOG_TYPES[blogType]}\nLongitud esperada: ${blogType} palabras o más.`;
+    const system = `Eres un redactor SEO experto de AnnovaSoft siguiendo la Guía Editorial Ferova Agency. Genera un artículo de blog completo en HTML optimizado para SEO y GEO (para ser recomendado por IAs como ChatGPT, Perplexity y Google SGE).\n\nREGLAS OBLIGATORIAS DE LA GUÍA FEROVA:\n\n1. ANTES DE ESCRIBIR: El artículo debe responder: ¿Qué aprende el lector? ¿Qué decisión lo ayuda a tomar? ¿Ayuda a tomar mejores decisiones digitales?\n\n2. ESTRUCTURA OBLIGATORIA:\n- H1 único: [Keyword principal] + [Promesa de valor] | AnnovaSoft (máx 65 chars)\n- Primera oración: afirmación contundente con Sujeto+Verbo+Predicado técnico, NO pregunta\n- Párrafo introductorio: qué aprenderá, contexto, promesa de valor práctica\n- Desarrollo con H2 y H3\n- NUNCA saltar niveles jerárquicos\n- Cierre estratégico: conclusión + resumen práctico + reflexión + CTA sutil\n\n3. SEO: keyword en H1, primer párrafo y al menos un H2. Densidad máx 2-3%.\n4. TONO: conversado pero profesional. Técnico con contexto. Educación antes que venta.\n5. EXTENSIÓN según tipo solicitado.\n\nENLACES INTERNOS PSICOLÓGICOS:\n- Incluir 2-4 menciones naturales de productos de AnnovaSoft donde sea relevante\n- Formato: <a href='/producto/[slug-del-producto]' class='blog-product-link'>[nombre del producto]</a>\n\nENLACE A WHATSAPP:\n- Si es natural, incluir <a href='https://wa.me/573057950550' target='_blank' class='blog-whatsapp-link'>hablar con un asesor</a> máximo 1-2 veces\n\nSCHEMAS JSON-LD al final del HTML:\n- Article schema\n- FAQPage si aplica\n- HowTo si aplica\n\nMETA TAGS como comentarios al inicio:\n<!-- META_TITLE: [máx 60 chars] -->\n<!-- META_DESCRIPTION: [150-160 chars] -->\n<!-- SLUG: [solo-keywords-relevantes-sin-articulos-sin-tildes-max-40-chars] -->\n<!-- EXCERPT: [resumen de 2 oraciones] -->\n<!-- COVER_IMAGE_PROMPT: [descripción en inglés] -->\n\nCATÁLOGO DE PRODUCTOS DISPONIBLES:\n${catalog}`;
+    try { const { data, error } = await supabase.functions.invoke('nova-chat', { body: { messages: [{ role: 'user', content: prompt }], system, maxTokens: 3200 } }); if (error) throw error; const html = data.reply || ''; setBlogHtml(html); setBlogMetaTitle(extractMeta(html, 'META_TITLE')); setBlogMetaDescription(extractMeta(html, 'META_DESCRIPTION')); setBlogSlug(extractMeta(html, 'SLUG')); setBlogExcerpt(extractMeta(html, 'EXCERPT')); toast({ title: 'Artículo generado' }); } catch (err: any) { toast({ title: 'No se pudo generar el artículo', description: err.message, variant: 'destructive' }); } setGeneratingBlog(false);
   };
+  const saveBlog = async () => { const title = extractH1(blogHtml) || blogTopic; if (!title || !blogSlug || !blogHtml) return toast({ title: 'Faltan datos del artículo', variant: 'destructive' }); setSavingBlog(true); const payload = { title, slug: generateSlug(blogSlug).slice(0, 40), content: blogHtml, excerpt: blogExcerpt || null, meta_title: blogMetaTitle || null, meta_description: blogMetaDescription || null, cover_image: null, status: 'draft', author: 'AnnovaSoft', created_at: new Date().toISOString(), active: false, updated_at: new Date().toISOString() }; const { error } = editingBlog ? await (supabase as any).from('blog_posts').update(payload).eq('id', editingBlog.id) : await (supabase as any).from('blog_posts').insert(payload); if (error) toast({ title: 'Error al guardar artículo', description: error.message, variant: 'destructive' }); else { toast({ title: 'Artículo guardado como borrador' }); setEditingBlog(null); fetchData(); } setSavingBlog(false); };
 
-  const handleGenerateAI = async () => {
-    if (!name) {
-      toast({ title: 'Ingresa el nombre del producto primero', variant: 'destructive' });
-      return;
-    }
+  if (loading) return <main className="py-16 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></main>;
 
-    setGeneratingAI(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-description', {
-        body: { productName: name, price: price ? Number(price) : null, condition, warranty, additionalNotes: aiNotes || null },
-      });
-      if (error) throw error;
-      if (data.description) setDescription(data.description);
-      if (data.meta_title) setMetaTitle(data.meta_title);
-      if (data.meta_description) setMetaDesc(data.meta_description);
-      if (data.short_description) setShortDesc(data.short_description);
-      if (data.category) setCategory(data.category);
-      if (data.brand) setBrand(data.brand);
-      if (data.specs) setSpecsText(Object.entries(data.specs as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join('\n'));
-      if (data.reviews && Array.isArray(data.reviews)) setReviews(data.reviews);
-      toast({ title: 'Contenido generado con IA exitosamente' });
-    } catch (err: any) {
-      toast({ title: 'Error al generar contenido', description: err.message, variant: 'destructive' });
-    }
-    setGeneratingAI(false);
-  };
-
-  const handleSave = async () => {
-    if (!name || !price) {
-      toast({ title: 'Nombre y precio son requeridos', variant: 'destructive' });
-      return;
-    }
-    if (imageUrls.length === 0) {
-      toast({ title: 'Agrega al menos una imagen', variant: 'destructive' });
-      return;
-    }
-
-    setSaving(true);
-    let finalSlug = slug;
-
-    if (!editingId) {
-      let suffix = 1;
-      let slugExists = true;
-      while (slugExists) {
-        const checkSlug = suffix === 1 ? finalSlug : `${finalSlug}-${suffix}`;
-        const { data } = await supabase.from('products').select('id').eq('slug', checkSlug).maybeSingle();
-        if (!data) {
-          finalSlug = checkSlug;
-          slugExists = false;
-        } else {
-          suffix++;
-        }
-      }
-    }
-
-    const normalizedImages = await Promise.all(
-      imageUrls.map((url) => (isExternalImageUrl(url) ? downloadAndUpload(url) : Promise.resolve(url)))
-    );
-
-    if (category) await supabase.from('categories').upsert({ name: category, slug: generateSlug(category) }, { onConflict: 'name' });
-    if (brand) await supabase.from('brands').upsert({ name: brand }, { onConflict: 'name' });
-
-    const productData = {
-      name,
-      slug: finalSlug,
-      price: Number(price),
-      sale_price: salePrice ? Number(salePrice) : null,
-      sku: sku || null,
-      category: category || null,
-      brand: brand || null,
-      condition,
-      warranty,
-      short_description: shortDesc || null,
-      description: description || null,
-      specs: Object.keys(parseSpecs(specsText)).length > 0 ? parseSpecs(specsText) : null,
-      meta_title: metaTitle || null,
-      meta_description: metaDesc || null,
-      images: normalizedImages,
-      reviews: reviews.length > 0 ? reviews : null,
-      active: true,
-      updated_at: new Date().toISOString(),
-    };
-
-    let error;
-    if (editingId) {
-      ({ error } = await supabase.from('products').update(productData).eq('id', editingId));
-    } else {
-      ({ error } = await supabase.from('products').insert(productData));
-    }
-
-    if (error) {
-      toast({ title: 'Error al guardar', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: editingId ? 'Producto actualizado' : 'Producto creado' });
-      resetForm();
-      fetchData();
-    }
-    setSaving(false);
-  };
-
-  const handleToggleActive = async (product: DBProduct) => {
-    await supabase.from('products').update({ active: !product.active, updated_at: new Date().toISOString() }).eq('id', product.id);
-    fetchData();
-  };
-
-  const handleDeleteProduct = async (product: DBProduct) => {
-    if (!confirm(`¿Eliminar '${product.name}'? Esta acción no se puede deshacer.`)) return;
-    const { error } = await supabase.from('products').delete().eq('id', product.id);
-    if (error) {
-      toast({ title: 'Error al eliminar', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Producto eliminado' });
-      fetchData();
-    }
-  };
-
-  const filteredProducts = useMemo(() => {
-    const query = productSearch.trim().toLowerCase();
-    if (!query) return products;
-    return products.filter((product) => product.name.toLowerCase().includes(query));
-  }, [products, productSearch]);
-
-  if (loading) {
-    return <main className="py-16 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></main>;
-  }
-
-  return (
-    <main className="py-8">
-      <div className="container mx-auto px-4 max-w-5xl">
-        <h1 className="text-3xl font-bebas mb-8">Generador de <span className="text-primary">Fichas de Producto</span></h1>
-
-        <div className="bg-card rounded-lg border p-4 mb-6">
-          <label className="text-sm font-medium mb-2 block">Editar producto existente</label>
-          <Select value={editingId || ''} onValueChange={(val) => {
-            if (val === '__new__') { resetForm(); return; }
-            const p = products.find((pr) => pr.id === val);
-            if (p) loadProduct(p);
-          }}>
-            <SelectTrigger><SelectValue placeholder="Seleccionar producto o crear nuevo" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__new__">+ Crear nuevo producto</SelectItem>
-              {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-card rounded-lg border p-6">
-            <h2 className="text-xl font-bebas mb-4">Información del Producto</h2>
-            <div className="space-y-4">
-              <div>
-                <Input placeholder="Nombre del producto *" value={name} onChange={(e) => setName(e.target.value)} />
-                {name && <p className="text-xs text-muted-foreground mt-1">Slug: <code className="bg-muted px-1 rounded">{slug}</code></p>}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input placeholder="Precio COP *" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
-                <Input placeholder="Precio oferta COP (opcional)" type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} />
-              </div>
-              <Input placeholder="SKU / Referencia (opcional) — Ej: HP-EB840G10-I7" value={sku} onChange={(e) => setSku(e.target.value)} />
-
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Estado del producto</Label>
-                <RadioGroup value={condition} onValueChange={setCondition} className="flex gap-4">
-                  {['Nuevo', 'Usado', 'Reacondicionado'].map((opt) => (
-                    <div key={opt} className="flex items-center gap-2">
-                      <RadioGroupItem value={opt} id={`cond-${opt}`} />
-                      <Label htmlFor={`cond-${opt}`} className="text-sm">{opt}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Garantía</Label>
-                <Select value={warranty} onValueChange={setWarranty}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {WARRANTY_OPTIONS.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card rounded-lg border p-6">
-            <h2 className="text-xl font-bebas mb-4">Imágenes (mín 1, máx 5)</h2>
-            <div className="flex gap-3 flex-wrap mb-4">
-              {imageUrls.map((url, i) => (
-                <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border">
-                  <img src={url} alt={`Imagen ${i + 1} ${name || 'producto'} | AnnovaSoft`} title={name || 'Producto'} className="w-full h-full object-cover" />
-                  <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center"><X className="w-3 h-3" /></button>
-                </div>
-              ))}
-            </div>
-            {imageUrls.length < 5 && (
-              <div className="flex gap-3 items-end">
-                <div>
-                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
-                    {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}Subir archivo
-                  </Button>
-                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFileUpload} />
-                </div>
-                <div className="flex gap-2 flex-1">
-                  <Input placeholder="URL de imagen" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} />
-                  <Button type="button" variant="outline" onClick={addImageUrl}><Plus className="w-4 h-4" /></Button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="bg-card rounded-lg border p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bebas">Contenido Generado por IA</h2>
-              <Button type="button" onClick={handleGenerateAI} disabled={generatingAI || !name} className="bg-primary text-primary-foreground">
-                {generatingAI ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                {generatingAI ? 'Generando...' : 'Generar todo con IA'}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4">La IA genera automáticamente: descripción corta, descripción larga HTML, specs, categoría, marca, meta tags y 3 reseñas.</p>
-            <div className="mb-4">
-              <Label className="text-sm font-medium mb-2 block">Información adicional para la IA (opcional)</Label>
-              <Textarea value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="Pega specs del fabricante, características especiales, casos de uso..." />
-            </div>
-            {(category || brand) && <div className="flex gap-3 mb-4">{category && <Badge variant="secondary">Categoría: {category}</Badge>}{brand && <Badge variant="secondary">Marca: {brand}</Badge>}</div>}
-            {shortDesc && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Descripción corta ({shortDesc.length}/160)</Label><p className="text-sm bg-muted rounded p-2 mt-1">{shortDesc}</p></div>}
-            {metaTitle && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Meta título ({metaTitle.length}/60)</Label><p className="text-sm bg-muted rounded p-2 mt-1">{metaTitle}</p></div>}
-            {metaDesc && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Meta descripción ({metaDesc.length}/160)</Label><p className="text-sm bg-muted rounded p-2 mt-1">{metaDesc}</p></div>}
-            {specsText && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Especificaciones</Label><pre className="text-xs bg-muted rounded p-2 mt-1 whitespace-pre-wrap">{specsText}</pre></div>}
-            {reviews.length > 0 && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Reseñas generadas ({reviews.length})</Label><div className="space-y-2 mt-1">{reviews.map((r, i) => <div key={i} className="bg-muted rounded p-2 text-xs"><p className="font-medium">{r.author} — {r.role}</p><p className="text-muted-foreground">{r.text}</p></div>)}</div></div>}
-            {description && <details className="mb-4"><summary className="text-xs font-medium text-muted-foreground cursor-pointer">Ver descripción HTML generada</summary><div className="mt-2 prose prose-sm max-w-none product-description border rounded p-4" dangerouslySetInnerHTML={{ __html: description }} /></details>}
-          </div>
-
-          <div className="flex gap-3">
-            <Button onClick={handleSave} disabled={saving} className="flex-1 bg-primary text-primary-foreground h-auto py-3 text-lg">{saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}{editingId ? 'Actualizar Producto' : 'Guardar Producto'}</Button>
-            {editingId && <Button variant="outline" onClick={resetForm}>Cancelar edición</Button>}
-          </div>
-        </div>
-
-        <div className="mt-12">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-2xl font-bebas">Productos en <span className="text-primary">Base de Datos</span></h2>
-            <div className="relative w-full sm:max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Buscar por nombre..." className="pl-9" />
-            </div>
-          </div>
-          {filteredProducts.length === 0 ? <p className="text-center text-muted-foreground py-8">No hay productos aún.</p> : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Marca</TableHead>
-                    <TableHead>Precio</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProducts.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium text-sm">{p.name}</TableCell>
-                      <TableCell className="text-sm">{p.category || '-'}</TableCell>
-                      <TableCell className="text-sm">{p.brand || '-'}</TableCell>
-                      <TableCell className="text-sm">{formatPrice(Number(p.price))}</TableCell>
-                      <TableCell className="text-sm">{p.stock ?? '-'}</TableCell>
-                      <TableCell><Badge className={p.active ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'}>{p.active ? 'Activo' : 'Inactivo'}</Badge></TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => handleToggleActive(p)} title={p.active ? 'Desactivar' : 'Activar'}>{p.active ? <ToggleRight className="w-4 h-4 text-green-600" /> : <ToggleLeft className="w-4 h-4 text-muted-foreground" />}</Button>
-                          <Button size="icon" variant="ghost" onClick={() => loadProduct(p)} title="Editar"><Pencil className="w-4 h-4" /></Button>
-                          <a href={`/producto/${p.slug}`} target="_blank" rel="noopener noreferrer"><Button size="icon" variant="ghost" title="Ver producto"><Eye className="w-4 h-4" /></Button></a>
-                          <Button size="icon" variant="ghost" onClick={() => handleDeleteProduct(p)} title="Eliminar" className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </div>
-      </div>
-    </main>
-  );
+  return <main className="py-8"><div className="container mx-auto px-4 max-w-6xl"><h1 className="text-3xl font-bebas mb-8">Generador <span className="text-primary">AnnovaSoft</span></h1><Tabs value={tab} onValueChange={setTab}><TabsList className="mb-6"><TabsTrigger value="productos">Productos</TabsTrigger><TabsTrigger value="blog">Blog</TabsTrigger></TabsList>
+  <TabsContent value="productos"><div className="bg-card rounded-lg border p-4 mb-6"><label className="text-sm font-medium mb-2 block">Editar producto existente</label><Select value={editingId || ''} onValueChange={(val) => { if (val === '__new__') { resetForm(); return; } const p = products.find((pr) => pr.id === val); if (p) loadProduct(p); }}><SelectTrigger><SelectValue placeholder="Seleccionar producto o crear nuevo" /></SelectTrigger><SelectContent><SelectItem value="__new__">+ Crear nuevo producto</SelectItem>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div><div className="space-y-6"><div className="bg-card rounded-lg border p-6"><h2 className="text-xl font-bebas mb-4">Información del Producto</h2><div className="space-y-4"><div><Input placeholder="Nombre del producto *" value={name} onChange={(e) => setName(e.target.value)} />{name && <p className="text-xs text-muted-foreground mt-1">Slug: <code className="bg-muted px-1 rounded">{slug}</code></p>}</div><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><Input placeholder="Precio COP *" type="number" value={price} onChange={(e) => setPrice(e.target.value)} /><Input placeholder="Precio oferta COP (opcional)" type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} /></div><Input placeholder="SKU / Referencia (opcional)" value={sku} onChange={(e) => setSku(e.target.value)} /><div><Label className="text-sm font-medium mb-2 block">Estado del producto</Label><RadioGroup value={condition} onValueChange={setCondition} className="flex gap-4">{['Nuevo', 'Usado', 'Reacondicionado'].map((opt) => <div key={opt} className="flex items-center gap-2"><RadioGroupItem value={opt} id={`cond-${opt}`} /><Label htmlFor={`cond-${opt}`} className="text-sm">{opt}</Label></div>)}</RadioGroup></div><div><Label className="text-sm font-medium mb-2 block">Garantía</Label><Select value={warranty} onValueChange={setWarranty}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{WARRANTY_OPTIONS.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent></Select></div></div></div><div className="bg-card rounded-lg border p-6"><h2 className="text-xl font-bebas mb-4">Imágenes (mín 1, máx 5)</h2><div className="flex gap-3 flex-wrap mb-4">{imageUrls.map((url, i) => <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border"><img src={url} alt={`Imagen ${i + 1} ${name || 'producto'} | AnnovaSoft`} title={name || 'Producto'} className="w-full h-full object-cover" /><button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center"><X className="w-3 h-3" /></button></div>)}</div>{imageUrls.length < 5 && <div className="flex gap-3 items-end"><div><Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>{uploadingImage ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}Subir archivo</Button><input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFileUpload} /></div><div className="flex gap-2 flex-1"><Input placeholder="URL de imagen" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} /><Button type="button" variant="outline" onClick={addImageUrl}><Plus className="w-4 h-4" /></Button></div></div>}</div><div className="bg-card rounded-lg border p-6"><div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bebas">Contenido Generado por IA</h2><Button type="button" onClick={handleGenerateAI} disabled={generatingAI || !name} className="bg-primary text-primary-foreground">{generatingAI ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}{generatingAI ? 'Generando...' : 'Generar todo con IA'}</Button></div><p className="text-xs text-muted-foreground mb-4">La IA genera automáticamente descripción, HTML, specs, categoría, marca y meta tags.</p><div className="mb-4"><Label className="text-sm font-medium mb-2 block">Información adicional para la IA (opcional)</Label><Textarea value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="Pega specs del fabricante, características especiales, casos de uso..." /></div>{(category || brand) && <div className="flex gap-3 mb-4">{category && <Badge variant="secondary">Categoría: {category}</Badge>}{brand && <Badge variant="secondary">Marca: {brand}</Badge>}</div>}{shortDesc && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Descripción corta</Label><p className="text-sm bg-muted rounded p-2 mt-1">{shortDesc}</p></div>}{metaTitle && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Meta título</Label><p className="text-sm bg-muted rounded p-2 mt-1">{metaTitle}</p></div>}{metaDesc && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Meta descripción</Label><p className="text-sm bg-muted rounded p-2 mt-1">{metaDesc}</p></div>}{specsText && <div className="mb-4"><Label className="text-xs font-medium text-muted-foreground">Especificaciones</Label><pre className="text-xs bg-muted rounded p-2 mt-1 whitespace-pre-wrap">{specsText}</pre></div>}{description && <details className="mb-4"><summary className="text-xs font-medium text-muted-foreground cursor-pointer">Ver descripción HTML generada</summary><div className="mt-2 prose prose-sm max-w-none product-description border rounded p-4" dangerouslySetInnerHTML={{ __html: description }} /></details>}</div><div className="flex gap-3"><Button onClick={handleSave} disabled={saving} className="flex-1 bg-primary text-primary-foreground h-auto py-3 text-lg">{saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}{editingId ? 'Actualizar Producto' : 'Guardar Producto'}</Button>{editingId && <Button variant="outline" onClick={resetForm}>Cancelar edición</Button>}</div></div><div className="mt-12"><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><h2 className="text-2xl font-bebas">Productos en <span className="text-primary">Base de Datos</span></h2><div className="relative w-full sm:max-w-sm"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Buscar por nombre..." className="pl-9" /></div></div>{filteredProducts.length === 0 ? <p className="text-center text-muted-foreground py-8">No hay productos aún.</p> : <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Nombre</TableHead><TableHead>Categoría</TableHead><TableHead>Marca</TableHead><TableHead>Precio</TableHead><TableHead>Stock</TableHead><TableHead>Estado</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader><TableBody>{filteredProducts.map((p) => <TableRow key={p.id}><TableCell className="font-medium text-sm">{p.name}</TableCell><TableCell className="text-sm">{p.category || '-'}</TableCell><TableCell className="text-sm">{p.brand || '-'}</TableCell><TableCell className="text-sm">{formatPrice(Number(p.price))}</TableCell><TableCell className="text-sm">{p.stock ?? '-'}</TableCell><TableCell><Badge className={p.active ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'}>{p.active ? 'Activo' : 'Inactivo'}</Badge></TableCell><TableCell><div className="flex gap-1"><Button size="icon" variant="ghost" onClick={() => handleToggleActive(p)} title={p.active ? 'Desactivar' : 'Activar'}>{p.active ? <ToggleRight className="w-4 h-4 text-green-600" /> : <ToggleLeft className="w-4 h-4 text-muted-foreground" />}</Button><Button size="icon" variant="ghost" onClick={() => loadProduct(p)} title="Editar"><Pencil className="w-4 h-4" /></Button><a href={`/producto/${p.slug}`} target="_blank" rel="noopener noreferrer"><Button size="icon" variant="ghost" title="Ver producto"><Eye className="w-4 h-4" /></Button></a><Button size="icon" variant="ghost" onClick={() => handleDeleteProduct(p)} title="Eliminar" className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button></div></TableCell></TableRow>)}</TableBody></Table></div>}</div></TabsContent>
+  <TabsContent value="blog"><div className="grid gap-6 lg:grid-cols-[420px_1fr]"><div className="rounded-lg border bg-card p-6 space-y-4"><h2 className="text-xl font-bebas">Generador de Artículos</h2><Input placeholder="Tema del artículo" value={blogTopic} onChange={(e) => setBlogTopic(e.target.value)} /><Input placeholder="Palabras clave SEO" value={blogKeywords} onChange={(e) => setBlogKeywords(e.target.value)} /><Select value={blogIndustry} onValueChange={setBlogIndustry}><SelectTrigger><SelectValue placeholder="Industria/público" /></SelectTrigger><SelectContent>{['Tecnología empresarial','E-commerce','Salud','Educación','Construcción','Retail','General'].map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select><Textarea placeholder="Notas adicionales" value={blogNotes} onChange={(e) => setBlogNotes(e.target.value)} /><Select value={blogType} onValueChange={setBlogType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(BLOG_TYPES).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Button onClick={generateBlog} disabled={generatingBlog} className="w-full">{generatingBlog ? 'Generando...' : 'Generar artículo con IA'}</Button><div className="pt-4 border-t space-y-2"><h3 className="font-medium">Borradores guardados</h3>{filteredBlogPosts.slice(0, 5).map((post) => <button key={post.id} onClick={() => { setEditingBlog(post); setBlogHtml(post.content || ''); setBlogMetaTitle(post.meta_title || ''); setBlogMetaDescription(post.meta_description || ''); setBlogSlug(post.slug); setBlogExcerpt(post.excerpt || ''); }} className="block w-full rounded border px-3 py-2 text-left text-sm hover:bg-muted">{post.title}</button>)}</div></div><div className="rounded-lg border bg-card p-6"><div className="grid gap-3 md:grid-cols-3"><Input value={blogMetaTitle} onChange={(e) => setBlogMetaTitle(e.target.value)} placeholder="Meta title" /><Input value={blogMetaDescription} onChange={(e) => setBlogMetaDescription(e.target.value)} placeholder="Meta description" /><Input value={blogSlug} onChange={(e) => setBlogSlug(e.target.value)} placeholder="Slug" /></div><div className="mt-3"><Textarea value={blogExcerpt} onChange={(e) => setBlogExcerpt(e.target.value)} placeholder="Excerpt" /></div><div className="mt-4 rounded-lg border p-4 min-h-[320px] bg-background">{blogHtml ? <div className="blog-content" dangerouslySetInnerHTML={{ __html: blogHtml }} /> : <p className="text-sm text-muted-foreground">Aquí verás el preview del artículo generado.</p>}</div><div className="mt-4 flex justify-end"><Button onClick={saveBlog} disabled={savingBlog || !blogHtml}>{savingBlog ? 'Guardando...' : 'Guardar artículo'}</Button></div></div></div></TabsContent></Tabs></div><Dialog open={Boolean(editingBlog)} onOpenChange={(open) => !open && setEditingBlog(null)}><DialogContent><DialogHeader><DialogTitle>Editar borrador cargado</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Ya puedes modificar meta, slug o volver a guardar.</p></DialogContent></Dialog></main>;
 }

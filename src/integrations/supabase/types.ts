@@ -59,6 +59,54 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          active: boolean
+          author: string
+          content: string | null
+          cover_image: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          meta_description: string | null
+          meta_title: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          author?: string
+          content?: string | null
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          author?: string
+          content?: string | null
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           created_at: string
