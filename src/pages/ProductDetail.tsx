@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { getWhatsAppUrlForProduct } from '@/lib/whatsapp';
 import UrgencyBadge from '@/components/UrgencyBadge';
+import { GA } from '@/hooks/useAnalytics';
 
 interface DBProduct {
   id: string;

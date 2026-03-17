@@ -46,6 +46,7 @@ export default function Checkout() {
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
 
   useEffect(() => {
+    GA.beginCheckout(totalPrice);
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
