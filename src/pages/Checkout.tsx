@@ -60,7 +60,7 @@ export default function Checkout() {
       if (data && data.status !== 'pending') {
         setAvailabilityStatus(data.status === 'available' ? 'available' : 'unavailable');
         setAdminNotes(data.admin_notes || '');
-        setSuggestedProducts((data.suggested_products as SuggestedProduct[]) || []);
+        setSuggestedProducts((data.suggested_products as unknown as SuggestedProduct[]) || []);
         if (pollingRef.current) clearInterval(pollingRef.current);
       }
     }, 8000);
