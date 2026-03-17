@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
+import { getWhatsAppUrl } from '@/lib/whatsapp';
 import { categories } from '@/data/products';
 
 export default function Footer() {
