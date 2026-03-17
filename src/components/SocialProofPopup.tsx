@@ -30,33 +30,7 @@ export default function SocialProofPopup() {
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState<string[]>(FALLBACK_PRODUCTS);
 
-  // Intenta cargar productos reales de Supabase de forma segura
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const { createClient } = await import("@supabase/supabase-js");
-        const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
-        const supabaseKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-
-        if (!supabaseUrl || !supabaseKey) return;
-
-        const client = createClient(supabaseUrl, supabaseKey);
-        const { data } = await client
-          .from("products")
-          .select("name")
-          .eq("active", true)
-          .limit(30);
-
-        if (data && data.length > 0) {
-          setProducts(data.map((p: { name: string }) => p.name));
-        }
-      } catch {
-        // Si falla, usa los productos fallback — nunca rompe el build
-      }
-    }
-
-    loadProducts();
-  }, []);
+  // Productos fallback — sin dependencia externa
 
   useEffect(() => {
     if (products.length === 0) return;
