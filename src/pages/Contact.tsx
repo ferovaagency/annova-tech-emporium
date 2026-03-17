@@ -32,7 +32,7 @@ export default function Contact() {
     };
 
     const { error } = await supabase.from('quote_requests').insert(payload);
-    await supabase.functions.invoke('send-notification', { body: { type: 'quote_request', payload } });
+    await supabase.functions.invoke('send-notification', { body: { type: 'quote', payload } });
 
     if (error) {
       toast({ title: 'No se pudo enviar la solicitud', variant: 'destructive' });

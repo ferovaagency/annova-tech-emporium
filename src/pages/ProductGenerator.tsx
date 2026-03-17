@@ -187,6 +187,7 @@ export default function ProductGenerator() {
           price: price ? Number(price) : null,
           condition,
           warranty,
+          additionalNotes: aiNotes || null,
         },
       });
       if (error) throw error;

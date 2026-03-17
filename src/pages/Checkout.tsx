@@ -161,6 +161,38 @@ export default function Checkout() {
   const handleProceedToPayment = async () => {
     GA.purchase(orderRef, totalPrice);
     GA.availabilityTimer('available');
+
+    await supabase.from('orders').upsert({
+      reference: orderRef,
+      customer_name: fullName,
+      customer_email: email,
+      customer_phone: phone || null,
+      total: totalPrice,
+      items: items.map(({ product, quantity }) => ({
+        id: product.id,
+        name: product.name,
+        quantity,
+        price: product.price,
+        slug: product.slug,
+      })),
+      shipping_address: {
+        address,
+        city,
+        department,
+        companyName,
+        nit,
+      },
+      status: 'pending',
+      status_history: [
+        {
+          status: 'pending',
+          at: new Date().toISOString(),
+          source: 'checkout',
+        },
+      ],
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'reference' });
+
     const url = await buildWompiCheckoutUrl({
       reference: orderRef,
       amountInCents: totalPrice * 100,

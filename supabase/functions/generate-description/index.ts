@@ -73,7 +73,10 @@ La descripción HTML debe tener esta estructura EXACTA:
 <p>[Cierre: resumen + diferencial AnnovaSoft + CTA sutil]</p>
 
 Las 3 reseñas deben ser de nombres colombianos verosímiles con cargos reales (Gerente TI, Coordinadora de Compras, etc.) y ciudades colombianas reales.
-
+${additionalNotes ? `
+Información adicional del usuario a considerar:
+${additionalNotes}
+` : ''}
 Responde SOLO con JSON válido.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
