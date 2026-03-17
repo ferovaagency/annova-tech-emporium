@@ -103,6 +103,7 @@ export default function ProductGenerator() {
     setName(p.name);
     setPrice(String(p.price));
     setSalePrice(p.sale_price ? String(p.sale_price) : '');
+    setSku(p.sku || '');
     setCondition(p.condition || 'Nuevo');
     setWarranty(p.warranty || '12 meses con fabricante');
     setShortDesc(p.short_description || '');
