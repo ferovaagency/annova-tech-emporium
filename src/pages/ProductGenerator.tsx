@@ -53,6 +53,7 @@ export default function ProductGenerator() {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
+  const [sku, setSku] = useState('');
   const [condition, setCondition] = useState('Nuevo');
   const [warranty, setWarranty] = useState('12 meses con fabricante');
 
