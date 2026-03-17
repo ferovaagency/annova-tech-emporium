@@ -155,6 +155,8 @@ export default function Checkout() {
   };
 
   const handleProceedToPayment = async () => {
+    GA.purchase(orderRef, totalPrice);
+    GA.availabilityTimer('available');
     const url = await buildWompiCheckoutUrl({
       reference: orderRef,
       amountInCents: totalPrice * 100,
