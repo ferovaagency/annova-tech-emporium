@@ -98,11 +98,45 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          city: string | null
+          created_at: string
+          email: string
+          id: string
+          last_order_at: string | null
+          name: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          last_order_at?: string | null
+          name?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          last_order_at?: string | null
+          name?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean | null
           brand: string | null
           category: string | null
+          condition: string | null
           created_at: string
           description: string | null
           id: string
@@ -111,6 +145,7 @@ export type Database = {
           meta_title: string | null
           name: string
           price: number
+          reviews: Json | null
           sale_price: number | null
           short_description: string | null
           sku: string | null
@@ -118,11 +153,13 @@ export type Database = {
           specs: Json | null
           stock: number | null
           updated_at: string
+          warranty: string | null
         }
         Insert: {
           active?: boolean | null
           brand?: string | null
           category?: string | null
+          condition?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -131,6 +168,7 @@ export type Database = {
           meta_title?: string | null
           name: string
           price: number
+          reviews?: Json | null
           sale_price?: number | null
           short_description?: string | null
           sku?: string | null
@@ -138,11 +176,13 @@ export type Database = {
           specs?: Json | null
           stock?: number | null
           updated_at?: string
+          warranty?: string | null
         }
         Update: {
           active?: boolean | null
           brand?: string | null
           category?: string | null
+          condition?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -151,6 +191,7 @@ export type Database = {
           meta_title?: string | null
           name?: string
           price?: number
+          reviews?: Json | null
           sale_price?: number | null
           short_description?: string | null
           sku?: string | null
@@ -158,6 +199,7 @@ export type Database = {
           specs?: Json | null
           stock?: number | null
           updated_at?: string
+          warranty?: string | null
         }
         Relationships: []
       }
