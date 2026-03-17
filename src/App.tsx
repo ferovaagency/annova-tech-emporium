@@ -20,6 +20,8 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import AdminPanel from "./pages/AdminPanel";
+import ProductGenerator from "./pages/ProductGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,8 @@ const App = () => (
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/nosotros" element={<About />} />
                 <Route path="/contacto" element={<Contact />} />
+                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/generador" element={<ProductGenerator />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
