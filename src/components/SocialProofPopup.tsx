@@ -1,7 +1,6 @@
 // src/components/SocialProofPopup.tsx
 import { useEffect, useState } from "react";
 import { ShoppingBag, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 interface PopupData {
   name: string;
@@ -12,23 +11,17 @@ interface PopupData {
 
 const FAKE_NAMES = ["Carlos M.", "Andrés R.", "Laura G.", "Diego P.", "María F.", "Sebastián T.", "Valentina C.", "Juan D.", "Camila H.", "Felipe O."];
 const CITIES = ["Bogotá", "Medellín", "Cali", "Barranquilla", "Bucaramanga", "Pereira", "Manizales", "Cartagena", "Cúcuta", "Ibagué"];
+const FALLBACK_PRODUCTS = ["Servidor HP ProLiant", "Laptop Lenovo ThinkPad", "Switch Cisco Catalyst", "UPS APC Smart", "Firewall Fortinet"];
 
 export default function SocialProofPopup() {
   const [popup, setPopup] = useState<PopupData | null>(null);
   const [visible, setVisible] = useState(false);
-  const [products, setProducts] = useState<string[]>([]);
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  const [products] = useState<string[]>(FALLBACK_PRODUCTS);
 
   useEffect(() => {
     if (products.length === 0) return;
 
-    // Primera aparición: entre 8 y 15 segundos
     const firstTimer = setTimeout(showPopup, 8000 + Math.random() * 7000);
-
-    // Repetición cada 30-45 segundos
     const interval = setInterval(showPopup, 30000 + Math.random() * 15000);
 
     return () => {
@@ -36,24 +29,6 @@ export default function SocialProofPopup() {
       clearInterval(interval);
     };
   }, [products]);
-
-  async function loadProducts() {
-    try {
-      const { data } = await supabase
-        .from("products")
-        .select("name")
-        .eq("active", true)
-        .limit(20);
-      if (data && data.length > 0) {
-        setProducts(data.map((p) => p.name));
-      } else {
-        // Fallback si no hay productos en Supabase aún
-        setProducts(["Servidor HP ProLiant", "Laptop Lenovo ThinkPad", "Switch Cisco Catalyst", "UPS APC Smart", "Firewall Fortinet"]);
-      }
-    } catch {
-      setProducts(["Servidor HP ProLiant", "Laptop Lenovo ThinkPad", "Switch Cisco Catalyst"]);
-    }
-  }
 
   function showPopup() {
     const data: PopupData = {
