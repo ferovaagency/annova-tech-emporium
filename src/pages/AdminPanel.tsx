@@ -1,7 +1,7 @@
 // TODO: Add authentication/authorization for admin access
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { products as localProducts, formatPrice } from '@/data/products';
+import { formatPrice } from '@/data/products';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Search, ExternalLink, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Search, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AvailabilityRequest {
@@ -54,10 +54,13 @@ export default function AdminPanel() {
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 
   const fetchRequests = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('availability_requests')
       .select('*')
       .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching requests:', error);
+    }
     if (data) setRequests(data as unknown as AvailabilityRequest[]);
   }, []);
 
@@ -71,13 +74,15 @@ export default function AdminPanel() {
 
   useEffect(() => {
     Promise.all([fetchRequests(), fetchProducts()]).then(() => setLoading(false));
-    // Polling every 15s for new requests
-    const interval = setInterval(fetchRequests, 15000);
+    const interval = setInterval(fetchRequests, 10000);
     return () => clearInterval(interval);
   }, [fetchRequests, fetchProducts]);
 
   const handleMarkAvailable = async (id: string) => {
-    await supabase.from('availability_requests').update({ status: 'available' }).eq('id', id);
+    await supabase.from('availability_requests').update({
+      status: 'available',
+      updated_at: new Date().toISOString(),
+    }).eq('id', id);
     toast({ title: 'Solicitud marcada como disponible' });
     fetchRequests();
   };
@@ -96,6 +101,7 @@ export default function AdminPanel() {
       status: 'unavailable',
       admin_notes: adminNote || null,
       suggested_products: selectedSuggestions.length > 0 ? selectedSuggestions : null,
+      updated_at: new Date().toISOString(),
     }).eq('id', selectedRequest.id);
     toast({ title: 'Respuesta enviada al cliente' });
     setUnavailableModalOpen(false);
@@ -107,12 +113,10 @@ export default function AdminPanel() {
     fetchProducts();
   };
 
-  // Search products for suggestions (from both DB and local data)
+  // Search products for suggestions
   const searchResults = searchQuery.length >= 2
-    ? [
-        ...dbProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map(p => ({ name: p.name, slug: p.slug, price: Number(p.price) })),
-        ...localProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map(p => ({ name: p.name, slug: p.slug, price: p.price })),
-      ].filter((item, index, self) => self.findIndex(s => s.slug === item.slug) === index)
+    ? dbProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .map(p => ({ name: p.name, slug: p.slug, price: Number(p.price) }))
         .filter(item => !selectedSuggestions.some(s => s.slug === item.slug))
         .slice(0, 5)
     : [];
@@ -149,7 +153,6 @@ export default function AdminPanel() {
             <TabsTrigger value="productos">Productos</TabsTrigger>
           </TabsList>
 
-          {/* TAB 1 - Solicitudes */}
           <TabsContent value="solicitudes" className="mt-6">
             {requests.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No hay solicitudes aún.</p>
@@ -180,7 +183,7 @@ export default function AdminPanel() {
                         <TableCell>
                           <ul className="text-xs space-y-1">
                             {(req.items || []).map((item, i) => (
-                              <li key={i}>{item.name} x{item.quantity}</li>
+                              <li key={i}>{item.name} x{item.quantity} — {formatPrice(item.price)}</li>
                             ))}
                           </ul>
                         </TableCell>
@@ -206,7 +209,6 @@ export default function AdminPanel() {
             )}
           </TabsContent>
 
-          {/* TAB 2 - Productos */}
           <TabsContent value="productos" className="mt-6">
             <div className="flex justify-between items-center mb-4">
               <p className="text-sm text-muted-foreground">{dbProducts.length} productos en base de datos</p>
@@ -215,7 +217,7 @@ export default function AdminPanel() {
               </Button>
             </div>
             {dbProducts.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No hay productos en la base de datos. Usa el generador para crear productos.</p>
+              <p className="text-center text-muted-foreground py-8">No hay productos en la base de datos.</p>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -267,34 +269,18 @@ export default function AdminPanel() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-1 block">Nota para el cliente</label>
-              <Textarea
-                placeholder="Explica al cliente por qué no está disponible..."
-                value={adminNote}
-                onChange={e => setAdminNote(e.target.value)}
-              />
+              <Textarea placeholder="Explica al cliente por qué no está disponible..." value={adminNote} onChange={e => setAdminNote(e.target.value)} />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Productos sugeridos (opcional)</label>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar productos alternativos..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+                <Input placeholder="Buscar productos alternativos..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
               </div>
               {searchResults.length > 0 && (
                 <div className="border rounded-lg mt-2 max-h-40 overflow-y-auto">
                   {searchResults.map((item, i) => (
-                    <button
-                      key={i}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex justify-between items-center"
-                      onClick={() => {
-                        setSelectedSuggestions(prev => [...prev, item]);
-                        setSearchQuery('');
-                      }}
-                    >
+                    <button key={i} className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex justify-between items-center" onClick={() => { setSelectedSuggestions(prev => [...prev, item]); setSearchQuery(''); }}>
                       <span>{item.name}</span>
                       <span className="text-xs text-primary font-bold">{formatPrice(item.price)}</span>
                     </button>
@@ -306,16 +292,14 @@ export default function AdminPanel() {
                   {selectedSuggestions.map((s, i) => (
                     <div key={i} className="flex items-center justify-between bg-muted rounded px-3 py-1.5 text-sm">
                       <span>{s.name} — {formatPrice(s.price)}</span>
-                      <button className="text-red-500 text-xs" onClick={() => setSelectedSuggestions(prev => prev.filter((_, idx) => idx !== i))}>
-                        Quitar
-                      </button>
+                      <button className="text-red-500 text-xs" onClick={() => setSelectedSuggestions(prev => prev.filter((_, idx) => idx !== i))}>Quitar</button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
             <Button onClick={handleSendUnavailable} variant="destructive" className="w-full">
-              Enviar respuesta
+              Confirmar y notificar
             </Button>
           </div>
         </DialogContent>

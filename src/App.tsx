@@ -22,9 +22,34 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import AdminPanel from "./pages/AdminPanel";
 import ProductGenerator from "./pages/ProductGenerator";
+import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Log SQL instructions once for missing tables
+console.log(`
+=== ANNOVA TECH — TABLAS SUPABASE REQUERIDAS ===
+Si hay errores, ejecuta este SQL en Supabase:
+
+create table if not exists availability_requests (
+  id uuid default gen_random_uuid() primary key,
+  customer_name text, customer_email text, customer_phone text,
+  items jsonb not null, total numeric, status text default 'pending',
+  admin_notes text, suggested_products jsonb,
+  created_at timestamp default now(), updated_at timestamp default now()
+);
+
+create table if not exists customers (
+  id uuid default gen_random_uuid() primary key,
+  email text unique not null, name text, phone text, city text,
+  last_order_at timestamp, created_at timestamp default now(), updated_at timestamp default now()
+);
+
+alter table products add column if not exists reviews jsonb;
+alter table products add column if not exists condition text default 'Nuevo';
+alter table products add column if not exists warranty text;
+`);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -48,11 +73,11 @@ const App = () => (
                 <Route path="/contacto" element={<Contact />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/generador" element={<ProductGenerator />} />
+                <Route path="/mi-cuenta" element={<MyAccount />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
             <Footer />
-            {/* Componentes globales de conversión */}
             <WhatsAppButton />
             <AIChatWidget />
             <SocialProofPopup />

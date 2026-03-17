@@ -64,9 +64,9 @@ export default function Header() {
           {/* Icons */}
           <div className="flex items-center gap-2 ml-auto">
             <Link to="/tienda" className="md:hidden p-2"><Search className="w-5 h-5" /></Link>
-            <Button variant="ghost" size="icon" className="relative">
+            <Link to="/mi-cuenta" className="p-2 hover:bg-muted rounded-lg transition-colors">
               <User className="w-5 h-5" />
-            </Button>
+            </Link>
             <Link to="/carrito" className="relative p-2 hover:bg-muted rounded-lg transition-colors">
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 &&
