@@ -142,7 +142,7 @@ export default function AdminPanel() {
     await supabase.from('availability_requests').update({
       status: 'unavailable',
       admin_notes: adminNote || null,
-      suggested_products: selectedSuggestions.length > 0 ? selectedSuggestions : null,
+      suggested_products: selectedSuggestions.length > 0 ? selectedSuggestions as any : null,
       updated_at: new Date().toISOString(),
     }).eq('id', selectedRequest.id);
     toast({ title: 'Respuesta enviada al cliente' });
