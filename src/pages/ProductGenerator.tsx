@@ -4,11 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/products';
 import { generateSlug } from '@/lib/slug';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, X, Sparkles, Eye, Pencil, Plus } from 'lucide-react';
 
@@ -29,98 +30,89 @@ interface DBProduct {
   meta_description: string | null;
   images: string[] | null;
   active: boolean | null;
+  condition: string | null;
+  warranty: string | null;
+  reviews: Array<{ author: string; role: string; text: string; rating: number }> | null;
 }
+
+const WARRANTY_OPTIONS = [
+  "6 meses con fabricante",
+  "12 meses con fabricante",
+  "24 meses con fabricante",
+  "6 meses con Annova Soft",
+  "12 meses con Annova Soft",
+  "Sin garantía",
+];
 
 export default function ProductGenerator() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state
+  // Form state - simplified
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
-  const [sku, setSku] = useState('');
   const [price, setPrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
-  const [category, setCategory] = useState('');
-  const [newCategory, setNewCategory] = useState('');
-  const [brand, setBrand] = useState('');
-  const [newBrand, setNewBrand] = useState('');
-  const [stock, setStock] = useState('');
-  const [shortDesc, setShortDesc] = useState('');
-  const [specsText, setSpecsText] = useState('');
-  const [description, setDescription] = useState('');
-  const [metaTitle, setMetaTitle] = useState('');
-  const [metaDesc, setMetaDesc] = useState('');
+  const [condition, setCondition] = useState('Nuevo');
+  const [warranty, setWarranty] = useState('12 meses con fabricante');
 
   // Images
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // AI-generated fields (read-only after generation)
+  const [shortDesc, setShortDesc] = useState('');
+  const [description, setDescription] = useState('');
+  const [specsText, setSpecsText] = useState('');
+  const [category, setCategory] = useState('');
+  const [brand, setBrand] = useState('');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDesc, setMetaDesc] = useState('');
+  const [reviews, setReviews] = useState<Array<{ author: string; role: string; text: string; rating: number }>>([]);
+
   // Data
-  const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
-  const [brands, setBrands] = useState<Array<{ id: string; name: string }>>([]);
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
 
-  // CSV
-  const [csvUploading, setCsvUploading] = useState(false);
-  const [csvProgress, setCsvProgress] = useState(0);
-  const csvFileRef = useRef<HTMLInputElement>(null);
-
   const slug = generateSlug(name);
 
   const fetchData = useCallback(async () => {
-    const [catRes, brandRes, prodRes] = await Promise.all([
-      supabase.from('categories').select('*').order('name'),
-      supabase.from('brands').select('*').order('name'),
-      supabase.from('products').select('*').order('created_at', { ascending: false }),
-    ]);
-    if (catRes.data) setCategories(catRes.data as any);
-    if (brandRes.data) setBrands(brandRes.data as any);
-    if (prodRes.data) setProducts(prodRes.data as unknown as DBProduct[]);
+    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (data) setProducts(data as unknown as DBProduct[]);
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const parseSpecs = (text: string): Record<string, string> => {
-    const specs: Record<string, string> = {};
-    text.split('\n').forEach(line => {
-      const idx = line.indexOf(':');
-      if (idx > 0) {
-        specs[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
-      }
-    });
-    return specs;
-  };
-
   const resetForm = () => {
     setEditingId(null);
-    setName(''); setSku(''); setPrice(''); setSalePrice('');
-    setCategory(''); setNewCategory(''); setBrand(''); setNewBrand('');
-    setStock(''); setShortDesc(''); setSpecsText('');
-    setDescription(''); setMetaTitle(''); setMetaDesc('');
-    setImageUrls([]);
+    setName(''); setPrice(''); setSalePrice('');
+    setCondition('Nuevo'); setWarranty('12 meses con fabricante');
+    setShortDesc(''); setDescription(''); setSpecsText('');
+    setCategory(''); setBrand('');
+    setMetaTitle(''); setMetaDesc('');
+    setImageUrls([]); setReviews([]);
   };
 
   const loadProduct = (p: DBProduct) => {
     setEditingId(p.id);
     setName(p.name);
-    setSku(p.sku || '');
     setPrice(String(p.price));
     setSalePrice(p.sale_price ? String(p.sale_price) : '');
+    setCondition(p.condition || 'Nuevo');
+    setWarranty(p.warranty || '12 meses con fabricante');
+    setShortDesc(p.short_description || '');
+    setDescription(p.description || '');
+    setSpecsText(p.specs ? Object.entries(p.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '');
     setCategory(p.category || '');
     setBrand(p.brand || '');
-    setStock(p.stock != null ? String(p.stock) : '');
-    setShortDesc(p.short_description || '');
-    setSpecsText(p.specs ? Object.entries(p.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '');
-    setDescription(p.description || '');
     setMetaTitle(p.meta_title || '');
     setMetaDesc(p.meta_description || '');
     setImageUrls(p.images || []);
+    setReviews(p.reviews || []);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -150,21 +142,42 @@ export default function ProductGenerator() {
 
   const removeImage = (idx: number) => setImageUrls(prev => prev.filter((_, i) => i !== idx));
 
+  const parseSpecs = (text: string): Record<string, string> => {
+    const specs: Record<string, string> = {};
+    text.split('\n').forEach(line => {
+      const idx = line.indexOf(':');
+      if (idx > 0) specs[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+    });
+    return specs;
+  };
+
   const handleGenerateAI = async () => {
     if (!name) { toast({ title: 'Ingresa el nombre del producto primero', variant: 'destructive' }); return; }
     setGeneratingAI(true);
     try {
-      const specs = parseSpecs(specsText);
       const { data, error } = await supabase.functions.invoke('generate-description', {
-        body: { productName: name, brand: brand || newBrand, category: category || newCategory, specs, shortDescription: shortDesc },
+        body: {
+          productName: name,
+          price: price ? Number(price) : null,
+          condition,
+          warranty,
+        },
       });
       if (error) throw error;
       if (data.description) setDescription(data.description);
       if (data.meta_title) setMetaTitle(data.meta_title);
       if (data.meta_description) setMetaDesc(data.meta_description);
-      toast({ title: 'Descripción generada con IA' });
+      if (data.short_description) setShortDesc(data.short_description);
+      if (data.category) setCategory(data.category);
+      if (data.brand) setBrand(data.brand);
+      if (data.specs) {
+        const specsObj = data.specs as Record<string, string>;
+        setSpecsText(Object.entries(specsObj).map(([k, v]) => `${k}: ${v}`).join('\n'));
+      }
+      if (data.reviews && Array.isArray(data.reviews)) setReviews(data.reviews);
+      toast({ title: 'Contenido generado con IA exitosamente' });
     } catch (err: any) {
-      toast({ title: 'Error al generar descripción', description: err.message, variant: 'destructive' });
+      toast({ title: 'Error al generar contenido', description: err.message, variant: 'destructive' });
     }
     setGeneratingAI(false);
   };
@@ -174,33 +187,47 @@ export default function ProductGenerator() {
     if (imageUrls.length === 0) { toast({ title: 'Agrega al menos una imagen', variant: 'destructive' }); return; }
     setSaving(true);
 
-    // Ensure category exists
-    const finalCategory = newCategory || category;
-    if (newCategory) {
-      const catSlug = generateSlug(newCategory);
-      await supabase.from('categories').upsert({ name: newCategory, slug: catSlug }, { onConflict: 'name' });
+    // Anti-duplicate slug check
+    let finalSlug = slug;
+    if (!editingId) {
+      let suffix = 1;
+      let slugExists = true;
+      while (slugExists) {
+        const checkSlug = suffix === 1 ? finalSlug : `${finalSlug}-${suffix}`;
+        const { data } = await supabase.from('products').select('id').eq('slug', checkSlug).single();
+        if (!data) {
+          finalSlug = checkSlug;
+          slugExists = false;
+        } else {
+          suffix++;
+        }
+      }
     }
-    // Ensure brand exists
-    const finalBrand = newBrand || brand;
-    if (newBrand) {
-      await supabase.from('brands').upsert({ name: newBrand }, { onConflict: 'name' });
+
+    // Ensure category exists
+    if (category) {
+      await supabase.from('categories').upsert({ name: category, slug: generateSlug(category) }, { onConflict: 'name' });
+    }
+    if (brand) {
+      await supabase.from('brands').upsert({ name: brand }, { onConflict: 'name' });
     }
 
     const productData = {
       name,
-      slug,
+      slug: finalSlug,
       price: Number(price),
       sale_price: salePrice ? Number(salePrice) : null,
-      sku: sku || null,
-      category: finalCategory || null,
-      brand: finalBrand || null,
-      stock: stock ? Number(stock) : 0,
+      category: category || null,
+      brand: brand || null,
+      condition,
+      warranty,
       short_description: shortDesc || null,
       description: description || null,
       specs: Object.keys(parseSpecs(specsText)).length > 0 ? parseSpecs(specsText) : null,
       meta_title: metaTitle || null,
       meta_description: metaDesc || null,
       images: imageUrls,
+      reviews: reviews.length > 0 ? reviews : null,
       active: true,
     };
 
@@ -216,83 +243,16 @@ export default function ProductGenerator() {
     } else {
       toast({
         title: editingId ? 'Producto actualizado' : 'Producto creado',
-        description: `Ver en /producto/${slug}`,
+        description: (
+          <a href={`/producto/${finalSlug}`} className="text-primary underline">
+            Ver en /producto/{finalSlug}
+          </a>
+        ) as any,
       });
       resetForm();
       fetchData();
     }
     setSaving(false);
-  };
-
-  // CSV Upload
-  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setCsvUploading(true);
-    setCsvProgress(0);
-
-    const text = await file.text();
-    const lines = text.split('\n').filter(l => l.trim());
-    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-
-    const rows = lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim());
-      const obj: Record<string, string> = {};
-      header.forEach((h, i) => { obj[h] = values[i] || ''; });
-      return obj;
-    });
-
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const rowSlug = generateSlug(row.nombre || row.name || '');
-      if (!rowSlug) continue;
-
-      // Ensure category
-      if (row.categoria || row.category) {
-        const catName = row.categoria || row.category;
-        await supabase.from('categories').upsert({ name: catName, slug: generateSlug(catName) }, { onConflict: 'name' });
-      }
-      // Ensure brand
-      if (row.marca || row.brand) {
-        await supabase.from('brands').upsert({ name: row.marca || row.brand }, { onConflict: 'name' });
-      }
-
-      const imgUrl = row.imagen_url || row.image_url || '';
-      // Upload image from URL to storage
-      let finalImageUrl = imgUrl;
-      if (imgUrl) {
-        try {
-          const resp = await fetch(imgUrl);
-          const blob = await resp.blob();
-          const ext = imgUrl.split('.').pop()?.split('?')[0] || 'jpg';
-          const path = `csv-${Date.now()}-${i}.${ext}`;
-          const { error: uploadErr } = await supabase.storage.from('product-images').upload(path, blob);
-          if (!uploadErr) {
-            const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-            finalImageUrl = urlData.publicUrl;
-          }
-        } catch { /* keep original URL */ }
-      }
-
-      await supabase.from('products').insert({
-        name: row.nombre || row.name || '',
-        slug: rowSlug,
-        price: Number(row.precio || row.price || 0),
-        sku: row.sku || null,
-        category: row.categoria || row.category || null,
-        brand: row.marca || row.brand || null,
-        stock: Number(row.stock || 0),
-        images: finalImageUrl ? [finalImageUrl] : [],
-        active: true,
-      });
-
-      setCsvProgress(Math.round(((i + 1) / rows.length) * 100));
-    }
-
-    toast({ title: `${rows.length} productos importados` });
-    setCsvUploading(false);
-    fetchData();
-    if (csvFileRef.current) csvFileRef.current.value = '';
   };
 
   if (loading) {
@@ -328,86 +288,44 @@ export default function ProductGenerator() {
           </Select>
         </div>
 
-        {/* Form */}
+        {/* Simplified Form */}
         <div className="space-y-6">
-          {/* Basic info */}
           <div className="bg-card rounded-lg border p-6">
-            <h2 className="text-xl font-bebas mb-4">Información Básica</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
+            <h2 className="text-xl font-bebas mb-4">Información del Producto</h2>
+            <div className="space-y-4">
+              <div>
                 <Input placeholder="Nombre del producto *" value={name} onChange={e => setName(e.target.value)} />
                 {name && <p className="text-xs text-muted-foreground mt-1">Slug: <code className="bg-muted px-1 rounded">{slug}</code></p>}
               </div>
-              <Input placeholder="SKU" value={sku} onChange={e => setSku(e.target.value)} />
-              <Input placeholder="Stock" type="number" value={stock} onChange={e => setStock(e.target.value)} />
-              <Input placeholder="Precio COP *" type="number" value={price} onChange={e => setPrice(e.target.value)} />
-              <Input placeholder="Precio oferta COP" type="number" value={salePrice} onChange={e => setSalePrice(e.target.value)} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input placeholder="Precio COP *" type="number" value={price} onChange={e => setPrice(e.target.value)} />
+                <Input placeholder="Precio oferta COP (opcional)" type="number" value={salePrice} onChange={e => setSalePrice(e.target.value)} />
+              </div>
 
-              {/* Category */}
+              {/* Condition */}
               <div>
-                <Select value={category} onValueChange={val => { setCategory(val); setNewCategory(''); }}>
-                  <SelectTrigger><SelectValue placeholder="Categoría" /></SelectTrigger>
+                <Label className="text-sm font-medium mb-2 block">Estado del producto</Label>
+                <RadioGroup value={condition} onValueChange={setCondition} className="flex gap-4">
+                  {['Nuevo', 'Usado', 'Reacondicionado'].map(opt => (
+                    <div key={opt} className="flex items-center gap-2">
+                      <RadioGroupItem value={opt} id={`cond-${opt}`} />
+                      <Label htmlFor={`cond-${opt}`} className="text-sm">{opt}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {/* Warranty */}
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Garantía</Label>
+                <Select value={warranty} onValueChange={setWarranty}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {categories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                    {WARRANTY_OPTIONS.map(w => (
+                      <SelectItem key={w} value={w}>{w}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <Input placeholder="O crear nueva categoría" value={newCategory} onChange={e => { setNewCategory(e.target.value); setCategory(''); }} className="mt-2" />
-              </div>
-
-              {/* Brand */}
-              <div>
-                <Select value={brand} onValueChange={val => { setBrand(val); setNewBrand(''); }}>
-                  <SelectTrigger><SelectValue placeholder="Marca" /></SelectTrigger>
-                  <SelectContent>
-                    {brands.map(b => <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Input placeholder="O crear nueva marca" value={newBrand} onChange={e => { setNewBrand(e.target.value); setBrand(''); }} className="mt-2" />
-              </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="bg-card rounded-lg border p-6">
-            <h2 className="text-xl font-bebas mb-4">Contenido</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Descripción corta ({shortDesc.length}/160)</label>
-                <Input
-                  placeholder="Máx 160 caracteres"
-                  value={shortDesc}
-                  onChange={e => e.target.value.length <= 160 && setShortDesc(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Especificaciones (una por línea, formato "Clave: Valor")</label>
-                <Textarea
-                  placeholder={"Procesador: Intel Core i7-13700\nRAM: 16 GB DDR5\nAlmacenamiento: 512 GB SSD"}
-                  value={specsText}
-                  onChange={e => setSpecsText(e.target.value)}
-                  rows={5}
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-sm font-medium">Descripción HTML (larga)</label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGenerateAI}
-                    disabled={generatingAI}
-                  >
-                    {generatingAI ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                    Generar descripción con IA
-                  </Button>
-                </div>
-                <Textarea
-                  placeholder="HTML de la descripción larga..."
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  rows={10}
-                />
               </div>
             </div>
           </div>
@@ -419,10 +337,7 @@ export default function ProductGenerator() {
               {imageUrls.map((url, i) => (
                 <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border">
                   <img src={url} alt="" className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => removeImage(i)}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                  >
+                  <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -445,19 +360,77 @@ export default function ProductGenerator() {
             )}
           </div>
 
-          {/* SEO */}
+          {/* AI Generation */}
           <div className="bg-card rounded-lg border p-6">
-            <h2 className="text-xl font-bebas mb-4">SEO</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Meta título ({metaTitle.length}/60)</label>
-                <Input value={metaTitle} onChange={e => e.target.value.length <= 60 && setMetaTitle(e.target.value)} placeholder="Keyword | Annova Tech" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Meta descripción ({metaDesc.length}/155)</label>
-                <Textarea value={metaDesc} onChange={e => e.target.value.length <= 155 && setMetaDesc(e.target.value)} placeholder="155 caracteres exactos" rows={2} />
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bebas">Contenido Generado por IA</h2>
+              <Button
+                type="button"
+                onClick={handleGenerateAI}
+                disabled={generatingAI || !name}
+                className="bg-primary text-primary-foreground"
+              >
+                {generatingAI ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                {generatingAI ? 'Generando...' : 'Generar todo con IA'}
+              </Button>
             </div>
+            <p className="text-xs text-muted-foreground mb-4">La IA genera automáticamente: descripción corta, descripción larga HTML, specs, categoría, marca, meta tags y 3 reseñas.</p>
+
+            {(category || brand) && (
+              <div className="flex gap-3 mb-4">
+                {category && <Badge variant="secondary">Categoría: {category}</Badge>}
+                {brand && <Badge variant="secondary">Marca: {brand}</Badge>}
+              </div>
+            )}
+
+            {shortDesc && (
+              <div className="mb-4">
+                <Label className="text-xs font-medium text-muted-foreground">Descripción corta ({shortDesc.length}/160)</Label>
+                <p className="text-sm bg-muted rounded p-2 mt-1">{shortDesc}</p>
+              </div>
+            )}
+
+            {metaTitle && (
+              <div className="mb-4">
+                <Label className="text-xs font-medium text-muted-foreground">Meta título ({metaTitle.length}/60)</Label>
+                <p className="text-sm bg-muted rounded p-2 mt-1">{metaTitle}</p>
+              </div>
+            )}
+
+            {metaDesc && (
+              <div className="mb-4">
+                <Label className="text-xs font-medium text-muted-foreground">Meta descripción ({metaDesc.length}/160)</Label>
+                <p className="text-sm bg-muted rounded p-2 mt-1">{metaDesc}</p>
+              </div>
+            )}
+
+            {specsText && (
+              <div className="mb-4">
+                <Label className="text-xs font-medium text-muted-foreground">Especificaciones</Label>
+                <pre className="text-xs bg-muted rounded p-2 mt-1 whitespace-pre-wrap">{specsText}</pre>
+              </div>
+            )}
+
+            {reviews.length > 0 && (
+              <div className="mb-4">
+                <Label className="text-xs font-medium text-muted-foreground">Reseñas generadas ({reviews.length})</Label>
+                <div className="space-y-2 mt-1">
+                  {reviews.map((r, i) => (
+                    <div key={i} className="bg-muted rounded p-2 text-xs">
+                      <p className="font-medium">{r.author} — {r.role}</p>
+                      <p className="text-muted-foreground">{r.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {description && (
+              <details className="mb-4">
+                <summary className="text-xs font-medium text-muted-foreground cursor-pointer">Ver descripción HTML generada</summary>
+                <div className="mt-2 prose prose-sm max-w-none product-description border rounded p-4" dangerouslySetInnerHTML={{ __html: description }} />
+              </details>
+            )}
           </div>
 
           {/* Actions */}
@@ -468,24 +441,6 @@ export default function ProductGenerator() {
             </Button>
             {editingId && (
               <Button variant="outline" onClick={resetForm}>Cancelar edición</Button>
-            )}
-          </div>
-
-          {/* CSV Upload */}
-          <div className="bg-muted rounded-lg p-4">
-            <h3 className="font-bebas text-lg mb-2">Carga Masiva CSV</h3>
-            <p className="text-xs text-muted-foreground mb-3">Columnas: nombre, precio, imagen_url, sku, categoria, marca, stock</p>
-            <div className="flex gap-3 items-center">
-              <Button variant="outline" onClick={() => csvFileRef.current?.click()} disabled={csvUploading}>
-                {csvUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                {csvUploading ? `Importando... ${csvProgress}%` : 'Seleccionar CSV'}
-              </Button>
-              <input ref={csvFileRef} type="file" accept=".csv" className="hidden" onChange={handleCSVUpload} />
-            </div>
-            {csvUploading && (
-              <div className="mt-2 bg-background rounded-full h-2 overflow-hidden">
-                <div className="bg-primary h-full transition-all" style={{ width: `${csvProgress}%` }} />
-              </div>
             )}
           </div>
         </div>

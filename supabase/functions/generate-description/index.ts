@@ -9,67 +9,72 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { productName, brand, category, specs, shortDescription } = await req.json();
+    const { productName, price, condition, warranty } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const specsText = specs ? Object.entries(specs).map(([k, v]) => `${k}: ${v}`).join("\n") : "";
+    const systemPrompt = `Eres un redactor experto de fichas de producto para Annova Tech, una empresa colombiana de tecnología empresarial.
+Generas contenido completo para fichas de producto. Siempre escribes en español colombiano profesional.
+Responde SOLO con un JSON válido con estos campos exactos:
+- "description": string (HTML estructurado de la descripción larga)
+- "short_description": string (máx 160 chars, optimizada para SEO)
+- "meta_title": string (máx 60 chars, formato "keyword | Annova Tech")
+- "meta_description": string (150-160 chars, propuesta de valor + keyword + CTA implícita)
+- "category": string (categoría más apropiada del producto)
+- "brand": string (marca detectada del nombre del producto)
+- "specs": object (especificaciones técnicas clave-valor)
+- "reviews": array de 3 objetos con { "author": "nombre colombiano", "role": "cargo · ciudad, Colombia", "text": "testimonio específico máx 4 oraciones", "rating": 5 }`;
 
-    const systemPrompt = `Eres un redactor experto de fichas de producto para Annova Tech, una empresa colombiana de tecnología empresarial. 
-Generas HTML profesional para fichas de producto siguiendo la guía editorial de Ferova Agency.
-Siempre escribes en español colombiano profesional. No uses markdown, solo HTML puro.
-Responde SOLO con un JSON con tres campos: "description" (HTML), "meta_title" (máx 60 chars), "meta_description" (exactamente 155 chars).`;
-
-    const userPrompt = `Genera la ficha de producto completa para:
-
+    const userPrompt = `Genera la ficha completa para:
 Producto: ${productName}
-Marca: ${brand || "Sin marca"}
-Categoría: ${category || "General"}
-Descripción corta: ${shortDescription || ""}
-Especificaciones:
-${specsText}
+Precio: ${price ? `$${Number(price).toLocaleString('es-CO')} COP` : 'No especificado'}
+Estado: ${condition || 'Nuevo'}
+Garantía: ${warranty || '12 meses con fabricante'}
 
-La estructura HTML debe ser EXACTAMENTE esta:
+La descripción HTML debe tener esta estructura EXACTA:
 
-<p><strong>[AFIRMACIÓN INICIAL: Sujeto + Verbo + Predicado técnico sobre el producto, 1 oración contundente]</strong></p>
-<p>[Párrafo introductorio: qué es, para qué sirve, qué gana el comprador. 3-5 oraciones. Incluir keyword natural. Tono conversado pero profesional.]</p>
+<p><strong>[Afirmación inicial contundente: Sujeto + Verbo + Predicado técnico. 1 oración.]</strong></p>
+<p>[Párrafo intro: qué es, para qué sirve, qué gana el comprador. 3-5 oraciones. Keyword natural.]</p>
 
 <h2>¿Para quién es este producto?</h2>
-<ul>
-<li><strong>[Perfil 1 de empresa colombiana]</strong>: [Caso de uso específico con detalle real]</li>
-<li><strong>[Perfil 2]</strong>: [Caso de uso]</li>
-<li><strong>[Perfil 3]</strong>: [Caso de uso]</li>
-</ul>
+<h3>[Perfil 1 empresa colombiana]</h3>
+<h4>[Caso de uso específico]</h4>
+<h3>[Perfil 2]</h3>
+<h4>[Caso de uso]</h4>
+<h3>[Perfil 3]</h3>
+<h4>[Caso de uso]</h4>
 
-<h2>Especificaciones Técnicas de ${productName}</h2>
-<table><thead><tr><th>Especificación</th><th>Valor</th><th>¿Qué significa para ti?</th></tr></thead><tbody>[filas con datos reales del producto]</tbody></table>
+<h2>Especificaciones Técnicas</h2>
+<table><thead><tr><th>Especificación</th><th>Valor</th><th>¿Qué significa para ti?</th></tr></thead><tbody>[filas con specs reales]</tbody></table>
 
-<h2>Beneficios Reales de ${productName}</h2>
-<ul>[Lista de beneficios como ganancias concretas del comprador, NO features. Mín 4 beneficios.]</ul>
+<h2>Beneficios Reales</h2>
+<ul>[mín 4 beneficios como ganancias concretas del comprador, NO features]</ul>
 
-<h2>Sobre ${brand || "la marca"}</h2>
-<p>[Historia, posicionamiento, certificaciones, garantía oficial, presencia en Colombia. 3-5 oraciones.]</p>
+<h2>Sobre [MARCA]</h2>
+<p>[Historia, posicionamiento, certificaciones, presencia en Colombia. 3-5 oraciones.]</p>
 
 <h2>¿Por qué comprarlo en Annova Tech?</h2>
-<ul>[Argumentos concretos: garantía Annova Tech, soporte técnico pre y post venta, autenticidad verificable, velocidad de entrega en Colombia.]</ul>
+<ul>
+<li>Garantía: ${warranty || '12 meses con fabricante'}</li>
+<li>Soporte técnico pre y post venta sin costo adicional</li>
+<li>Autenticidad verificable con factura de importación</li>
+<li>Entrega a todo Colombia en 1-5 días hábiles</li>
+<li>Pago seguro con Wompi: tarjeta, PSE o Nequi</li>
+</ul>
 
-<h2>Lo que dicen nuestros clientes</h2>
-<blockquote>[Testimonio verosímil: nombre colombiano con inicial de apellido, cargo, ciudad, beneficio específico. — Nombre · Cargo · Ciudad, Colombia]</blockquote>
+<h2>Preguntas Frecuentes</h2>
+<h3>¿[Pregunta de compatibilidad técnica]?</h3><p>[Respuesta 2-3 oraciones]</p>
+<h3>¿Qué garantía tiene este producto en Annova Tech?</h3><p>[Respuesta con ${warranty}]</p>
+<h3>¿[Pregunta de uso empresarial Colombia]?</h3><p>[Respuesta]</p>
+<h3>¿Hacen envíos a todo Colombia?</h3><p>[Respuesta con tiempos]</p>
+<h3>¿Qué medios de pago aceptan?</h3><p>[Respuesta: Wompi, PSE, Nequi, tarjeta]</p>
 
-<h2>Preguntas Frecuentes sobre ${productName}</h2>
-<details><summary>¿[Pregunta de compatibilidad técnica]?</summary><p>[Respuesta directa 2-3 oraciones]</p></details>
-<details><summary>¿Qué garantía tiene en Annova Tech?</summary><p>[Respuesta con detalles]</p></details>
-<details><summary>¿[Pregunta de uso específico para empresa colombiana]?</summary><p>[Respuesta]</p></details>
-<details><summary>¿Hacen envíos a todo Colombia?</summary><p>[Respuesta con tiempos reales]</p></details>
-<details><summary>¿[Pregunta de pago o financiamiento]?</summary><p>[Respuesta mencionando Wompi, PSE, Nequi]</p></details>
+<h2>Tu decisión inteligente en tecnología</h2>
+<p>[Cierre: resumen + diferencial Annova Tech + CTA sutil]</p>
 
-<h2>Tu decisión inteligente en tecnología empresarial</h2>
-<p>[Cierre: resumen del argumento principal + diferencial Annova Tech + CTA sutil]</p>
+Las 3 reseñas deben ser de nombres colombianos verosímiles con cargos reales (Gerente TI, Coordinadora de Compras, etc.) y ciudades colombianas reales.
 
-meta_title: máx 60 chars, formato: "[keyword principal] | Annova Tech"
-meta_description: exactamente 155 chars, propuesta de valor + keyword + CTA implícita tipo "Disponible en todo Colombia"
-
-Responde SOLO con JSON válido: {"description": "...", "meta_title": "...", "meta_description": "..."}`;
+Responde SOLO con JSON válido.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -106,15 +111,22 @@ Responde SOLO con JSON válido: {"description": "...", "meta_title": "...", "met
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
-    
-    // Try to parse the JSON from the AI response
+
     let parsed;
     try {
-      // Remove markdown code fences if present
       const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       parsed = JSON.parse(cleaned);
     } catch {
-      parsed = { description: content, meta_title: `${productName} | Annova Tech`, meta_description: `${productName} disponible en Annova Tech. Envío a todo Colombia.` };
+      parsed = {
+        description: content,
+        short_description: `${productName} disponible en Annova Tech con envío a todo Colombia.`,
+        meta_title: `${productName} | Annova Tech`.slice(0, 60),
+        meta_description: `${productName} disponible en Annova Tech. Envío a todo Colombia. Pago seguro con Wompi.`,
+        category: "General",
+        brand: "",
+        specs: {},
+        reviews: [],
+      };
     }
 
     return new Response(JSON.stringify(parsed), {
