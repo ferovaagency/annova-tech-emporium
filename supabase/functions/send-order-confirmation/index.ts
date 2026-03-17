@@ -10,10 +10,10 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { reference, transactionId, customerEmail, customerName, items = [], total } = body;
+    const { reference, transactionId, customerName, items = [], total } = body;
 
-    const customerSubject = `✅ Tu pedido AnnovaSoft confirmado - Ref: ${reference}`;
-    const internalSubject = `Nuevo pedido pagado - ${reference}`;
+    const recipients = ['administrativo@annovasoft.com', 'Comercial1@annovasoft.com', 'gerencia@annovasoft.com'];
+    const subject = `Nuevo pedido pagado - ${reference}`;
 
     const rows = (items as Array<{ name: string; quantity: number; price: number }>).map(
       (item) => `<tr><td style="padding:8px 0;border-bottom:1px solid #e5e7eb;">${item.name} x${item.quantity}</td><td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:right;">$${Number(item.price * item.quantity).toLocaleString('es-CO')} COP</td></tr>`
@@ -25,13 +25,13 @@ serve(async (req) => {
           <div style="font-size:28px;font-weight:800;color:#CC0000;">AnnovaSoft</div>
           <div style="font-size:14px;color:#6b7280;">Annova Software y Accesorios SAS</div>
         </div>
-        <h1 style="font-size:32px;line-height:1.1;margin:0 0 16px;">¡Tu pago fue exitoso!</h1>
-        <p style="margin:0 0 20px;">Hola ${customerName || 'cliente'}, confirmamos tu pedido${transactionId ? ` y la transacción ${transactionId}` : ''}.</p>
+        <h1 style="font-size:32px;line-height:1.1;margin:0 0 16px;">Nuevo pedido pagado</h1>
+        <p style="margin:0 0 20px;">${customerName ? `Cliente: <strong>${customerName}</strong>. ` : ''}${transactionId ? `Transacción: <strong>${transactionId}</strong>.` : ''}</p>
         <div style="font-size:2rem;font-weight:800;color:#CC0000;background:#f3f4f6;padding:20px;border-radius:16px;text-align:center;margin:0 0 24px;">${reference}</div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${rows}</table>
         <div style="font-size:24px;font-weight:800;margin:0 0 24px;">Total: <span style="color:#CC0000;">$${Number(total || 0).toLocaleString('es-CO')} COP</span></div>
         <div style="background:#f9fafb;border-radius:16px;padding:20px;margin-bottom:20px;">
-          <h2 style="font-size:18px;margin:0 0 12px;">¿Tienes dudas sobre tu pedido?</h2>
+          <h2 style="font-size:18px;margin:0 0 12px;">Contacto AnnovaSoft</h2>
           <p style="margin:0 0 8px;">Sergio Muñoz: +57 320 257 9393</p>
           <p style="margin:0 0 8px;">Isabella Garzón: +57 350 750 1878</p>
           <p style="margin:0 0 8px;">AnnovaSoft: +57 305 795 0550</p>
@@ -43,19 +43,16 @@ serve(async (req) => {
 
     console.log('send-order-confirmation prepared', JSON.stringify({
       reference,
-      customerEmail,
-      customerSubject,
-      internalSubject,
-      copies: ['administrativo@annovasoft.com', 'Comercial1@annovasoft.com', 'gerencia@annovasoft.com'],
+      subject,
+      recipients,
       hasEmailDomain: false,
     }));
 
     return new Response(JSON.stringify({
       queued: false,
       reason: 'email_domain_required',
-      customerEmail,
-      customerSubject,
-      internalSubject,
+      recipients,
+      subject,
       html,
     }), {
       status: 200,
