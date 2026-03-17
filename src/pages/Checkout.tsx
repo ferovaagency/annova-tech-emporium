@@ -160,7 +160,6 @@ export default function Checkout() {
       customerEmail: email,
       customerFullName: fullName,
       customerPhoneNumber: phone,
-      shippingAddress: { addressLine1: address, city },
     });
     clearCart();
     window.location.href = url;

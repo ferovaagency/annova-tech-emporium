@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Search, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Search, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AvailabilityRequest {
@@ -22,7 +22,7 @@ interface AvailabilityRequest {
   total: number;
   status: string;
   admin_notes: string | null;
-  suggested_products: Array<{ name: string; slug: string; price: number }> | null;
+  suggested_products: Array<{ id: string; name: string; slug: string; price: number; image?: string }> | null;
   created_at: string;
   updated_at: string;
 }
@@ -32,10 +32,20 @@ interface DBProduct {
   name: string;
   slug: string;
   price: number;
+  sale_price: number | null;
   stock: number | null;
   active: boolean | null;
   category: string | null;
   brand: string | null;
+  images: string[] | null;
+}
+
+interface SuggestedProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  image?: string;
 }
 
 export default function AdminPanel() {
@@ -49,7 +59,8 @@ export default function AdminPanel() {
   const [selectedRequest, setSelectedRequest] = useState<AvailabilityRequest | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSuggestions, setSelectedSuggestions] = useState<Array<{ name: string; slug: string; price: number }>>([]);
+  const [searchResults, setSearchResults] = useState<SuggestedProduct[]>([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<SuggestedProduct[]>([]);
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 
@@ -67,7 +78,7 @@ export default function AdminPanel() {
   const fetchProducts = useCallback(async () => {
     const { data } = await supabase
       .from('products')
-      .select('id, name, slug, price, stock, active, category, brand')
+      .select('id, name, slug, price, sale_price, stock, active, category, brand, images')
       .order('created_at', { ascending: false });
     if (data) setDbProducts(data as unknown as DBProduct[]);
   }, []);
@@ -77,6 +88,36 @@ export default function AdminPanel() {
     const interval = setInterval(fetchRequests, 10000);
     return () => clearInterval(interval);
   }, [fetchRequests, fetchProducts]);
+
+  // Live search for product suggestions
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, slug, price, sale_price, images')
+        .eq('active', true)
+        .ilike('name', `%${searchQuery}%`)
+        .limit(8);
+      if (data) {
+        setSearchResults(
+          data
+            .filter((p: any) => !selectedSuggestions.some(s => s.id === p.id))
+            .map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              price: p.sale_price || p.price,
+              image: p.images?.[0],
+            }))
+        );
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedSuggestions]);
 
   const handleMarkAvailable = async (id: string) => {
     await supabase.from('availability_requests').update({
@@ -92,6 +133,7 @@ export default function AdminPanel() {
     setAdminNote('');
     setSelectedSuggestions([]);
     setSearchQuery('');
+    setSearchResults([]);
     setUnavailableModalOpen(true);
   };
 
@@ -100,7 +142,7 @@ export default function AdminPanel() {
     await supabase.from('availability_requests').update({
       status: 'unavailable',
       admin_notes: adminNote || null,
-      suggested_products: selectedSuggestions.length > 0 ? selectedSuggestions : null,
+      suggested_products: selectedSuggestions.length > 0 ? selectedSuggestions as any : null,
       updated_at: new Date().toISOString(),
     }).eq('id', selectedRequest.id);
     toast({ title: 'Respuesta enviada al cliente' });
@@ -112,14 +154,6 @@ export default function AdminPanel() {
     await supabase.from('products').update({ active: !product.active }).eq('id', product.id);
     fetchProducts();
   };
-
-  // Search products for suggestions
-  const searchResults = searchQuery.length >= 2
-    ? dbProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-        .map(p => ({ name: p.name, slug: p.slug, price: Number(p.price) }))
-        .filter(item => !selectedSuggestions.some(s => s.slug === item.slug))
-        .slice(0, 5)
-    : [];
 
   const statusBadge = (status: string) => {
     if (status === 'pending') return <Badge className="bg-yellow-500 text-white">Pendiente</Badge>;
@@ -238,7 +272,7 @@ export default function AdminPanel() {
                         <TableCell className="font-medium text-sm">{p.name}</TableCell>
                         <TableCell className="text-sm">{p.category || '-'}</TableCell>
                         <TableCell className="text-sm">{p.brand || '-'}</TableCell>
-                        <TableCell className="text-sm">{formatPrice(Number(p.price))}</TableCell>
+                        <TableCell className="text-sm">{formatPrice(Number(p.sale_price || p.price))}</TableCell>
                         <TableCell className="text-sm">{p.stock ?? '-'}</TableCell>
                         <TableCell>
                           <Badge variant={p.active ? 'default' : 'secondary'}>
@@ -275,24 +309,27 @@ export default function AdminPanel() {
               <label className="text-sm font-medium mb-1 block">Productos sugeridos (opcional)</label>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Buscar productos alternativos..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
+                <Input placeholder="Buscar producto..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
               </div>
               {searchResults.length > 0 && (
-                <div className="border rounded-lg mt-2 max-h-40 overflow-y-auto">
-                  {searchResults.map((item, i) => (
-                    <button key={i} className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex justify-between items-center" onClick={() => { setSelectedSuggestions(prev => [...prev, item]); setSearchQuery(''); }}>
-                      <span>{item.name}</span>
-                      <span className="text-xs text-primary font-bold">{formatPrice(item.price)}</span>
+                <div className="border rounded-lg mt-2 max-h-48 overflow-y-auto">
+                  {searchResults.map((item) => (
+                    <button key={item.id} className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-center gap-3" onClick={() => { setSelectedSuggestions(prev => [...prev, item]); setSearchQuery(''); setSearchResults([]); }}>
+                      {item.image && <img src={item.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />}
+                      <span className="flex-1 truncate">{item.name}</span>
+                      <span className="text-xs text-primary font-bold flex-shrink-0">{formatPrice(item.price)}</span>
                     </button>
                   ))}
                 </div>
               )}
               {selectedSuggestions.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {selectedSuggestions.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between bg-muted rounded px-3 py-1.5 text-sm">
-                      <span>{s.name} — {formatPrice(s.price)}</span>
-                      <button className="text-red-500 text-xs" onClick={() => setSelectedSuggestions(prev => prev.filter((_, idx) => idx !== i))}>Quitar</button>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedSuggestions.map((s) => (
+                    <div key={s.id} className="flex items-center gap-2 bg-muted rounded-full px-3 py-1 text-sm">
+                      <span className="truncate max-w-[180px]">{s.name}</span>
+                      <button className="text-muted-foreground hover:text-destructive" onClick={() => setSelectedSuggestions(prev => prev.filter(p => p.id !== s.id))}>
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
                   ))}
                 </div>

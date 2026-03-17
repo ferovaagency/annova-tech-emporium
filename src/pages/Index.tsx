@@ -1,13 +1,51 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { ArrowRight, Shield, Truck, Headphones } from 'lucide-react';
-import { products, categories, formatPrice } from '@/data/products';
+import { products as localProducts, categories, formatPrice, Product } from '@/data/products';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
 import ProductCard from '@/components/ProductCard';
+import { supabase } from '@/integrations/supabase/client';
+
+function mapDbProduct(p: any): Product {
+  return {
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    price: p.sale_price || p.price,
+    oldPrice: p.sale_price ? p.price : undefined,
+    image: (p.images && p.images[0]) || 'https://placehold.co/400x400?text=Sin+imagen',
+    images: p.images || [],
+    category: p.category || '',
+    categorySlug: p.category ? p.category.toLowerCase().replace(/\s+/g, '-').replace(/[áàä]/g, 'a').replace(/[éèë]/g, 'e').replace(/[íìï]/g, 'i').replace(/[óòö]/g, 'o').replace(/[úùü]/g, 'u') : '',
+    brand: p.brand || '',
+    condition: (p.condition || 'Nuevo') as any,
+    shortDescription: p.short_description || '',
+    description: p.description || '',
+    specs: (p.specs || {}) as Record<string, string>,
+    rating: 4.8,
+    reviews: Array.isArray(p.reviews) ? p.reviews.length : 0,
+  };
+}
 
 export default function Index() {
-  const featuredProducts = products.filter(p => p.featured);
-  const bestSellers = products.filter(p => p.bestSeller);
-  const offerProducts = products.filter(p => p.badge === 'Oferta');
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(localProducts.filter(p => p.featured));
+  const bestSellers = localProducts.filter(p => p.bestSeller);
+  const offerProducts = localProducts.filter(p => p.badge === 'Oferta');
+
+  useEffect(() => {
+    async function fetchFeatured() {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: false })
+        .limit(8);
+      if (data && data.length > 0) {
+        setFeaturedProducts(data.map(mapDbProduct));
+      }
+    }
+    fetchFeatured();
+  }, []);
 
   return (
     <main>

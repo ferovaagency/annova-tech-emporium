@@ -53,6 +53,7 @@ export default function ProductGenerator() {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
+  const [sku, setSku] = useState('');
   const [condition, setCondition] = useState('Nuevo');
   const [warranty, setWarranty] = useState('12 meses con fabricante');
 
@@ -89,7 +90,7 @@ export default function ProductGenerator() {
 
   const resetForm = () => {
     setEditingId(null);
-    setName(''); setPrice(''); setSalePrice('');
+    setName(''); setPrice(''); setSalePrice(''); setSku('');
     setCondition('Nuevo'); setWarranty('12 meses con fabricante');
     setShortDesc(''); setDescription(''); setSpecsText('');
     setCategory(''); setBrand('');
@@ -102,6 +103,7 @@ export default function ProductGenerator() {
     setName(p.name);
     setPrice(String(p.price));
     setSalePrice(p.sale_price ? String(p.sale_price) : '');
+    setSku(p.sku || '');
     setCondition(p.condition || 'Nuevo');
     setWarranty(p.warranty || '12 meses con fabricante');
     setShortDesc(p.short_description || '');
@@ -133,10 +135,32 @@ export default function ProductGenerator() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const addImageUrl = () => {
+  const downloadAndUploadImage = async (imageUrl: string): Promise<string> => {
+    try {
+      const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(imageUrl)}`);
+      if (!response.ok) throw new Error('No se pudo descargar la imagen');
+      const blob = await response.blob();
+      const extension = imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
+      const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+      const ext = validExtensions.includes(extension.toLowerCase()) ? extension.toLowerCase() : 'jpg';
+      const filename = `product-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from('product-images').upload(filename, blob, { contentType: blob.type || 'image/jpeg', upsert: false });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filename);
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error descargando imagen:', error);
+      return imageUrl;
+    }
+  };
+
+  const addImageUrl = async () => {
     if (imageUrlInput.trim()) {
-      setImageUrls(prev => [...prev, imageUrlInput.trim()]);
+      setUploadingImage(true);
+      const uploaded = await downloadAndUploadImage(imageUrlInput.trim());
+      setImageUrls(prev => [...prev, uploaded]);
       setImageUrlInput('');
+      setUploadingImage(false);
     }
   };
 
@@ -217,6 +241,7 @@ export default function ProductGenerator() {
       slug: finalSlug,
       price: Number(price),
       sale_price: salePrice ? Number(salePrice) : null,
+      sku: sku || null,
       category: category || null,
       brand: brand || null,
       condition,
@@ -301,6 +326,7 @@ export default function ProductGenerator() {
                 <Input placeholder="Precio COP *" type="number" value={price} onChange={e => setPrice(e.target.value)} />
                 <Input placeholder="Precio oferta COP (opcional)" type="number" value={salePrice} onChange={e => setSalePrice(e.target.value)} />
               </div>
+              <Input placeholder="SKU / Referencia (opcional) — Ej: HP-EB840G10-I7" value={sku} onChange={e => setSku(e.target.value)} />
 
               {/* Condition */}
               <div>

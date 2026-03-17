@@ -34,6 +34,15 @@ interface DBProduct {
   active: boolean | null;
 }
 
+function formatSpecKey(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .toLowerCase()
+    .replace(/^\w/, c => c.toUpperCase());
+}
+
 export default function ProductDetail() {
   const { slug } = useParams();
   const { addToCart } = useCart();
@@ -239,7 +248,7 @@ export default function ProductDetail() {
                 <dl className="space-y-2">
                   {Object.entries(specs).slice(0, 4).map(([k, v]) => (
                     <div key={k} className="flex justify-between text-sm">
-                      <dt className="text-muted-foreground">{k}</dt>
+                      <dt className="text-muted-foreground">{formatSpecKey(k)}</dt>
                       <dd className="font-medium">{String(v)}</dd>
                     </div>
                   ))}
@@ -272,7 +281,7 @@ export default function ProductDetail() {
               <div className="bg-card rounded-lg border">
                 {Object.entries(specs).map(([k, v], i) => (
                   <div key={k} className={`flex justify-between p-4 text-sm ${i % 2 ? '' : 'bg-muted/50'}`}>
-                    <span className="font-medium">{k}</span>
+                    <span className="font-medium">{formatSpecKey(k)}</span>
                     <span className="text-muted-foreground">{String(v)}</span>
                   </div>
                 ))}
