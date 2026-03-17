@@ -241,6 +241,7 @@ export default function ProductGenerator() {
       slug: finalSlug,
       price: Number(price),
       sale_price: salePrice ? Number(salePrice) : null,
+      sku: sku || null,
       category: category || null,
       brand: brand || null,
       condition,
