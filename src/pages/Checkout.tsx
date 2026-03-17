@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { buildWompiCheckoutUrl, generateOrderReference } from '@/lib/wompi';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { GA } from '@/hooks/useAnalytics';
 
 type AvailabilityStatus = 'idle' | 'pending' | 'available' | 'unavailable' | 'timeout';
 
@@ -45,6 +46,7 @@ export default function Checkout() {
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
 
   useEffect(() => {
+    GA.beginCheckout(totalPrice);
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
@@ -154,6 +156,8 @@ export default function Checkout() {
   };
 
   const handleProceedToPayment = async () => {
+    GA.purchase(orderRef, totalPrice);
+    GA.availabilityTimer('available');
     const url = await buildWompiCheckoutUrl({
       reference: orderRef,
       amountInCents: totalPrice * 100,

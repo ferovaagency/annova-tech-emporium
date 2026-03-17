@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { getWhatsAppUrlForProduct } from '@/lib/whatsapp';
 import UrgencyBadge from '@/components/UrgencyBadge';
+import { GA } from '@/hooks/useAnalytics';
 
 interface DBProduct {
   id: string;
@@ -105,8 +106,11 @@ export default function ProductDetail() {
     fetchProduct();
   }, [slug]);
 
-  // Fetch related products
+  // Fetch related products + GA view_item
   useEffect(() => {
+    if (product) {
+      GA.viewItem(product.id, product.name, product.sale_price || product.price, product.category || undefined);
+    }
     if (product?.category) {
       supabase.from('products').select('*').eq('category', product.category).eq('active', true).neq('id', product.id).limit(4)
         .then(({ data }) => { if (data) setRelated(data as unknown as DBProduct[]); });
