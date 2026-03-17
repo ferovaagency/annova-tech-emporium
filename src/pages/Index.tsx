@@ -22,6 +22,20 @@ const heroBanners = [
   },
 ];
 
+function CategoryVisual({ name, image }: { name: string; image?: string }) {
+  const hasRealImage = Boolean(image && image.trim() && image !== '/placeholder.svg');
+
+  if (hasRealImage) {
+    return <img src={image} alt={`${name} AnnovaSoft tecnología empresarial Colombia`} title={name} className="h-32 w-full object-cover object-center transition-transform duration-300 group-hover:scale-110" loading="lazy" />;
+  }
+
+  return (
+    <div className="flex h-32 w-full items-center justify-center bg-gradient-to-br from-primary via-accent to-accent px-3 text-center text-sm font-bold text-primary-foreground">
+      {name}
+    </div>
+  );
+}
+
 export default function Index() {
   const { categories } = useActiveCategories();
   const [featured, setFeatured] = useState<Product[]>([]);
@@ -71,11 +85,11 @@ export default function Index() {
 
   return (
     <main>
-      <section className="relative overflow-hidden bg-accent">
-        <div className="relative aspect-[16/9] min-h-[420px] w-full md:min-h-[560px]">
+      <section className="relative overflow-hidden bg-accent max-h-[560px] md:max-h-[560px]">
+        <div className="relative h-[320px] md:h-[560px] w-full max-h-[560px] md:max-h-[560px]">
           {heroBanners.map((banner, index) => (
             <div key={banner.src} className={`absolute inset-0 transition-opacity duration-700 ${index === heroIndex ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-              <img src={banner.src} alt={banner.alt} title={banner.title} className="h-full w-full object-cover" />
+              <img src={banner.src} alt={banner.alt} title={banner.title} className="h-full w-full object-cover object-center" />
               <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/65 to-background/20" />
             </div>
           ))}
@@ -113,11 +127,11 @@ export default function Index() {
 
       <section className="border-b bg-muted py-4"><div className="container mx-auto flex flex-wrap justify-center gap-8 px-4 text-sm font-medium text-muted-foreground"><span className="flex items-center gap-2"><Truck className="h-5 w-5 text-primary" /> Envío a todo Colombia</span><span className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary" /> Garantía empresarial</span><span className="flex items-center gap-2"><Headphones className="h-5 w-5 text-primary" /> Soporte dedicado</span></div></section>
 
-      {categories.length > 0 && <section className="py-12"><div className="container mx-auto px-4"><h2 className="mb-8 text-center text-3xl md:text-4xl font-bebas">Explora Nuestras <span className="text-primary">Categorías</span></h2><div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">{categories.map((cat) => <Link key={cat.slug} to={`/tienda?categoria=${cat.slug}`} className="group overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-lg"><div className="overflow-hidden"><img src={cat.image} alt={`${cat.name} AnnovaSoft tecnología empresarial Colombia`} title={cat.name} className="h-32 w-full object-cover transition-transform duration-300 group-hover:scale-110" loading="lazy" /></div><div className="p-3 text-center"><span className="text-2xl">{cat.icon}</span><h3 className="mt-1 font-montserrat text-xs font-semibold">{cat.name}</h3></div></Link>)}</div></div></section>}
+      {categories.length > 0 && <section className="py-12"><div className="container mx-auto px-4"><h2 className="mb-8 text-center text-3xl md:text-4xl font-bebas">Explora Nuestras <span className="text-primary">Categorías</span></h2><div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">{categories.map((cat) => <Link key={cat.slug} to={`/tienda?categoria=${cat.slug}`} className="group overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-lg"><div className="overflow-hidden"><CategoryVisual name={cat.name} image={cat.image} /></div><div className="p-3 text-center"><span className="text-2xl">{cat.icon}</span><h3 className="mt-1 font-montserrat text-xs font-semibold">{cat.name}</h3></div></Link>)}</div></div></section>}
 
       <section className="bg-muted py-12"><div className="container mx-auto px-4"><div className="mb-8 flex items-center justify-between"><h2 className="text-3xl md:text-4xl font-bebas">Productos <span className="text-primary">Destacados</span></h2><Link to="/tienda" className="flex items-center gap-1 text-sm font-semibold text-secondary hover:underline">Ver todos <ArrowRight className="h-4 w-4" /></Link></div><div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">{loading ? skeletons : featured.map((p) => <ProductCard key={p.id} product={p} />)}</div></div></section>
 
-      {(loading || offers.length > 0) && <section className="bg-gradient-to-r from-primary to-accent py-12 text-primary-foreground"><div className="container mx-auto px-4"><div className="mb-8 text-center"><h2 className="text-3xl md:text-5xl font-bebas">🔥 Ofertas Especiales</h2><p className="mt-2 font-montserrat opacity-90">Aprovecha descuentos exclusivos en tecnología empresarial</p></div><div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">{loading ? Array.from({ length: 3 }, (_, i) => <div key={i} className="flex items-center gap-4 rounded-xl bg-background/10 p-4 backdrop-blur-sm"><Skeleton className="h-24 w-24 rounded-lg" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-6 w-1/2" /></div></div>) : offers.map((p) => <Link key={p.id} to={`/producto/${p.slug}`} className="flex items-center gap-4 rounded-xl bg-background/10 p-4 backdrop-blur-sm transition-colors hover:bg-background/20"><img src={p.image} alt={`${p.name}${p.brand ? ` ${p.brand}` : ''} | AnnovaSoft`} title={p.name} className="h-24 w-24 rounded-lg object-cover" /><div><h3 className="text-sm font-semibold">{p.name}</h3><div className="mt-1 flex items-baseline gap-2"><span className="text-xl font-bold">{formatPrice(p.price)}</span>{p.oldPrice && <span className="text-sm opacity-60 line-through">{formatPrice(p.oldPrice)}</span>}</div></div></Link>)}</div></div></section>}
+      {(loading || offers.length > 0) && <section className="bg-gradient-to-r from-primary to-accent py-12 text-primary-foreground"><div className="container mx-auto px-4"><div className="mb-8 text-center"><h2 className="text-3xl md:text-5xl font-bebas">🔥 Ofertas Especiales</h2><p className="mt-2 font-montserrat opacity-90">Aprovecha descuentos exclusivos en tecnología empresarial</p></div><div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">{loading ? Array.from({ length: 3 }, (_, i) => <div key={i} className="flex items-center gap-4 rounded-xl bg-background/10 p-4 backdrop-blur-sm"><Skeleton className="h-24 w-24 rounded-lg" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-6 w-1/2" /></div></div>) : offers.map((p) => <Link key={p.id} to={`/producto/${p.slug}`} className="flex items-center gap-4 rounded-xl bg-background/10 p-4 backdrop-blur-sm transition-colors hover:bg-background/20">{p.image ? <img src={p.image} alt={`${p.name}${p.brand ? ` ${p.brand}` : ''} | AnnovaSoft`} title={p.name} className="h-24 w-24 rounded-lg object-cover" /> : <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-background/20 text-xs font-semibold">Sin imagen</div>}<div><h3 className="text-sm font-semibold">{p.name}</h3><div className="mt-1 flex items-baseline gap-2"><span className="text-xl font-bold">{formatPrice(p.price)}</span>{p.oldPrice && <span className="text-sm opacity-60 line-through">{formatPrice(p.oldPrice)}</span>}</div></div></Link>)}</div></div></section>}
 
       <section className="py-12"><div className="container mx-auto px-4"><h2 className="mb-8 text-center text-3xl md:text-4xl font-bebas">Los Más <span className="text-primary">Vendidos</span></h2><div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">{loading ? skeletons : bestSellers.map((p) => <ProductCard key={p.id} product={p} />)}</div></div></section>
 
