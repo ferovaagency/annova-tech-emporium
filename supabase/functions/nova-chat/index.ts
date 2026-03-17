@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { messages, system } = await req.json();
+    const { messages, system, maxTokens } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
 
@@ -25,7 +25,7 @@ serve(async (req) => {
           { role: 'system', content: system },
           ...messages,
         ],
-        max_tokens: 600,
+        max_tokens: typeof maxTokens === 'number' ? maxTokens : 600,
       }),
     });
 

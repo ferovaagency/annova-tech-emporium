@@ -34,52 +34,91 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    window.scrollTo(0, 0);
   }, [pathname]);
 
   return null;
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <CartProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <div className="flex-1">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/tienda" element={<Store />} />
-                <Route path="/producto/:slug" element={<ProductDetail />} />
-                <Route path="/carrito" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/pago-resultado" element={<PaymentResult />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/nosotros" element={<About />} />
-                <Route path="/contacto" element={<Contact />} />
-                <Route path="/legal" element={<Legal />} />
-                <Route path="/admin" element={<AdminPanel />} />
-                <Route path="/generador" element={<ProductGenerator />} />
-                <Route path="/mi-cuenta" element={<MyAccount />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-            <Footer />
-            <WhatsAppButton />
-            <AIChatWidget />
-            <SocialProofPopup />
-            <CartDrawerCTA />
-            <CookieBanner />
-          </div>
-        </BrowserRouter>
-      </CartProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+const App = () => {
+  useEffect(() => {
+    console.log(`Ejecutar en Supabase si blog_posts no existe:
+
+create table if not exists blog_posts (
+
+  id uuid default gen_random_uuid() primary key,
+
+  title text not null,
+
+  slug text unique not null,
+
+  content text,
+
+  excerpt text,
+
+  cover_image text,
+
+  meta_title text,
+
+  meta_description text,
+
+  author text default 'AnnovaSoft',
+
+  status text default 'draft',
+
+  active boolean default false,
+
+  created_at timestamp default now(),
+
+  updated_at timestamp default now()
 );
+
+create policy if not exists 'blog_public' on blog_posts for all using (true) with check (true);
+
+alter table blog_posts enable row level security;`);
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <CartProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <div className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/tienda" element={<Store />} />
+                  <Route path="/producto/:slug" element={<ProductDetail />} />
+                  <Route path="/carrito" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/pago-resultado" element={<PaymentResult />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
+                  <Route path="/nosotros" element={<About />} />
+                  <Route path="/contacto" element={<Contact />} />
+                  <Route path="/legal" element={<Legal />} />
+                  <Route path="/admin" element={<AdminPanel />} />
+                  <Route path="/generador" element={<ProductGenerator />} />
+                  <Route path="/mi-cuenta" element={<MyAccount />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+              <Footer />
+              <WhatsAppButton />
+              <AIChatWidget />
+              <SocialProofPopup />
+              <CartDrawerCTA />
+              <CookieBanner />
+            </div>
+          </BrowserRouter>
+        </CartProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
