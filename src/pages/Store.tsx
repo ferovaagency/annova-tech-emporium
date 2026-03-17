@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { products, categories } from '@/data/products';
+import { products as localProducts, categories, Product } from '@/data/products';
 import ProductCard from '@/components/ProductCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { X, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Store() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,11 +18,63 @@ export default function Store() {
   const [priceRange, setPriceRange] = useState([0, 15000000]);
   const [showFilters, setShowFilters] = useState(false);
 
-  const brands = useMemo(() => [...new Set(products.map(p => p.brand))], []);
+  const [dbProducts, setDbProducts] = useState<Product[]>([]);
+  const [loadingDb, setLoadingDb] = useState(true);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('active', true)
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const mapped: Product[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            price: p.sale_price || p.price,
+            oldPrice: p.sale_price ? p.price : undefined,
+            image: (p.images && p.images[0]) || 'https://placehold.co/400x400?text=Sin+imagen',
+            images: p.images || [],
+            category: p.category || '',
+            categorySlug: p.category ? p.category.toLowerCase().replace(/\s+/g, '-') : '',
+            brand: p.brand || '',
+            condition: (p.condition || 'Nuevo') as any,
+            shortDescription: p.short_description || '',
+            description: p.description || '',
+            specs: (p.specs || {}) as Record<string, string>,
+            rating: p.reviews ? (p.reviews as any[]).reduce((s: number, r: any) => s + r.rating, 0) / (p.reviews as any[]).length : 5,
+            reviews: p.reviews ? (p.reviews as any[]).length : 0,
+          }));
+          setDbProducts(mapped);
+        }
+      } catch {
+        // fallback to local products
+      }
+      setLoadingDb(false);
+    }
+    fetchProducts();
+  }, []);
+
+  // Merge: DB products first, then local products as fallback
+  const allProducts = useMemo(() => {
+    if (dbProducts.length > 0) {
+      // Include both DB and local, dedup by slug
+      const slugSet = new Set(dbProducts.map(p => p.slug));
+      const localFallback = localProducts.filter(p => !slugSet.has(p.slug));
+      return [...dbProducts, ...localFallback];
+    }
+    return localProducts;
+  }, [dbProducts]);
+
+  const brands = useMemo(() => [...new Set(allProducts.map(p => p.brand))], [allProducts]);
 
   const filtered = useMemo(() => {
-    let result = [...products];
-    if (categoryFilter) result = result.filter(p => p.categorySlug === categoryFilter);
+    let result = [...allProducts];
+    if (categoryFilter) result = result.filter(p => p.categorySlug === categoryFilter || p.category?.toLowerCase().replace(/\s+/g, '-') === categoryFilter);
     if (conditionFilter) result = result.filter(p => p.condition === conditionFilter);
     if (brandFilter) result = result.filter(p => p.brand === brandFilter);
     if (searchQuery) {
@@ -33,7 +86,7 @@ export default function Store() {
     else if (sortBy === 'precio-desc') result.sort((a, b) => b.price - a.price);
     else if (sortBy === 'nombre') result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [categoryFilter, conditionFilter, brandFilter, searchQuery, sortBy, priceRange]);
+  }, [allProducts, categoryFilter, conditionFilter, brandFilter, searchQuery, sortBy, priceRange]);
 
   const activeCategory = categories.find(c => c.slug === categoryFilter);
 
@@ -53,7 +106,9 @@ export default function Store() {
             <h1 className="text-3xl md:text-4xl font-bebas">
               {activeCategory ? activeCategory.name : searchQuery ? `Resultados para "${searchQuery}"` : 'Tienda'}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">{filtered.length} productos encontrados</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              {loadingDb ? 'Cargando productos...' : `${filtered.length} productos encontrados`}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button className="lg:hidden flex items-center gap-2 px-4 py-2 border rounded-lg text-sm" onClick={() => setShowFilters(!showFilters)}>
@@ -152,7 +207,11 @@ export default function Store() {
 
           {/* Product grid */}
           <div className="flex-1">
-            {filtered.length === 0 ? (
+            {loadingDb ? (
+              <div className="text-center py-16">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-xl font-bebas text-muted-foreground mb-4">No se encontraron productos</p>
                 <button onClick={clearFilters} className="text-primary hover:underline">Limpiar filtros</button>
