@@ -199,7 +199,8 @@ export default function Checkout() {
 
   return (
     <main className="py-8">
-      <div className="container mx-auto px-4">
+      {/* GA: begin_checkout */}
+      <BeginCheckoutTracker total={totalPrice} />
         <h1 className="text-3xl font-bebas mb-8">Checkout <span className="text-primary">Empresarial</span></h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
