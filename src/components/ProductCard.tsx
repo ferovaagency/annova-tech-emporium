@@ -18,10 +18,11 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
-      <Link to={`/producto/${product.slug}`} className="relative overflow-hidden">
+      <Link to={`/producto/${product.slug}`} className="relative overflow-hidden" title={product.name}>
         <img
           src={product.image}
-          alt={product.name}
+          alt={`${product.name}${product.brand ? ` ${product.brand}` : ''} | AnnovaSoft`}
+          title={product.name}
           className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
@@ -39,7 +40,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <div className="p-3 flex flex-col flex-1">
         <p className="text-xs text-muted-foreground mb-1">{product.brand} · {product.condition}</p>
-        <Link to={`/producto/${product.slug}`}>
+        <Link to={`/producto/${product.slug}`} title={product.name}>
           <h3 className="font-montserrat font-semibold text-sm leading-tight mb-2 hover:text-primary transition-colors line-clamp-2">{product.name}</h3>
         </Link>
 
