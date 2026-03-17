@@ -14,16 +14,16 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      <div className="bg-accent text-accent-foreground text-xs py-1.5">
-        <div className="container mx-auto px-4 flex items-center justify-between flex-wrap gap-y-1">
-          <div className="flex items-center gap-3 divide-x divide-accent-foreground/20">
-            <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> +57 305 7950550</span>
-            <span className="hidden sm:flex items-center gap-1 pl-3"><Phone className="w-3 h-3" /> +57 301 6491625</span>
-            <span className="hidden md:flex items-center gap-1 pl-3"><Mail className="w-3 h-3" /> comercial1@annovasoft.com</span>
-            <span className="hidden lg:flex items-center gap-1 pl-3"><Mail className="w-3 h-3" /> gerencia@annovasoft.com</span>
+      <div className="bg-accent py-1.5 text-xs text-accent-foreground">
+        <div className="container mx-auto flex flex-wrap items-center justify-between gap-y-1 px-4">
+          <div className="flex flex-wrap items-center gap-3 divide-x divide-accent-foreground/20">
+            <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> +57 320 257 9393</span>
+            <span className="hidden items-center gap-1 pl-3 sm:flex"><Phone className="h-3 w-3" /> +57 350 750 1878</span>
+            <span className="hidden items-center gap-1 pl-3 md:flex"><Phone className="h-3 w-3" /> +57 305 795 0550</span>
+            <span className="hidden items-center gap-1 pl-3 lg:flex"><Mail className="h-3 w-3" /> ventas@annovasoft.co</span>
           </div>
-          <div className="hidden xl:flex items-center gap-1 text-accent-foreground/80">
-            <MapPin className="w-3 h-3" /> Cra 15 # 76-53 Oficina 204, Bogotá, Colombia
+          <div className="hidden items-center gap-1 text-accent-foreground/80 xl:flex">
+            <MapPin className="h-3 w-3" /> Cra 15 # 76-53 Oficina 204, Bogotá, Colombia
           </div>
         </div>
       </div>
