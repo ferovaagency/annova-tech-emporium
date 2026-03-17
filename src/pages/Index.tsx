@@ -126,7 +126,7 @@ export default function Index() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-5xl font-bebas mb-4">¿Necesitas Equipar Tu Empresa?</h2>
           <p className="font-montserrat text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">Solicita una cotización personalizada y recibe asesoría de nuestros expertos en tecnología empresarial.</p>
-          <a href="https://wa.me/573057950550?text=Hola%2C%20necesito%20una%20cotización%20empresarial" target="_blank" rel="noopener noreferrer" className="inline-block bg-primary text-primary-foreground font-bold px-10 py-4 rounded-lg text-lg hover:opacity-90 transition-opacity">
+          <a href={getWhatsAppUrl("Hola, necesito una cotización empresarial")} target="_blank" rel="noopener noreferrer" className="inline-block bg-primary text-primary-foreground font-bold px-10 py-4 rounded-lg text-lg hover:opacity-90 transition-opacity">
             Solicitar Cotización
           </a>
         </div>

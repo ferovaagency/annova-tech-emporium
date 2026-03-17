@@ -37,7 +37,7 @@ export default function About() {
         <section className="bg-muted rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bebas mb-3">¿Listo para <span className="text-primary">Trabajar Juntos</span>?</h2>
           <p className="text-muted-foreground mb-6">Contáctanos para una asesoría personalizada.</p>
-          <a href="https://wa.me/573057950550?text=Hola%2C%20quiero%20más%20información" target="_blank" rel="noopener noreferrer" className="inline-block bg-primary text-primary-foreground font-bold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity">
+          <a href={getWhatsAppUrl("Hola, quiero más información")} target="_blank" rel="noopener noreferrer" className="inline-block bg-primary text-primary-foreground font-bold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity">
             Contactar por WhatsApp
           </a>
         </section>

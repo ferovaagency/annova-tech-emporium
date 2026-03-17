@@ -54,7 +54,7 @@ export default function Footer() {
             <h4 className="font-bebas text-xl mb-4">Cotización Empresarial</h4>
             <p className="text-sm opacity-80 mb-4">¿Necesitas una cotización para tu empresa? Contáctanos y te asesoramos.</p>
             <a
-              href="https://wa.me/573057950550?text=Hola%2C%20necesito%20una%20cotización%20empresarial"
+              href={getWhatsAppUrl("Hola, necesito una cotización empresarial")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-primary text-primary-foreground font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 transition-opacity text-sm"
