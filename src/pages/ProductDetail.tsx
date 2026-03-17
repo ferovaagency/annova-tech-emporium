@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ShoppingCart, MessageCircle, Star, ChevronRight, Loader2 } from 'lucide-react';
-import { formatPrice } from '@/data/products';
+import { products as localProducts, formatPrice } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProductCard from '@/components/ProductCard';
@@ -41,26 +41,68 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [related, setRelated] = useState<DBProduct[]>([]);
 
   useEffect(() => {
     async function fetchProduct() {
       setLoading(true);
-      const { data, error } = await supabase
+      setNotFound(false);
+      setSelectedImage(0);
+
+      // Try Supabase first
+      const { data: supabaseProduct } = await supabase
         .from('products')
         .select('*')
         .eq('slug', slug)
         .eq('active', true)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
-        setNotFound(true);
-      } else {
-        setProduct(data as unknown as DBProduct);
+      if (supabaseProduct) {
+        setProduct(supabaseProduct as unknown as DBProduct);
+        setLoading(false);
+        return;
       }
+
+      // Fallback to local products
+      const localProduct = localProducts.find(p => p.slug === slug);
+      if (localProduct) {
+        setProduct({
+          id: localProduct.id,
+          name: localProduct.name,
+          slug: localProduct.slug,
+          price: localProduct.oldPrice || localProduct.price,
+          sale_price: localProduct.oldPrice ? localProduct.price : null,
+          images: localProduct.images,
+          category: localProduct.category,
+          brand: localProduct.brand,
+          condition: localProduct.condition,
+          warranty: null,
+          short_description: localProduct.shortDescription,
+          description: localProduct.description,
+          specs: localProduct.specs,
+          stock: null,
+          reviews: null,
+          meta_title: null,
+          meta_description: null,
+          active: true,
+        });
+        setLoading(false);
+        return;
+      }
+
+      setNotFound(true);
       setLoading(false);
     }
     fetchProduct();
   }, [slug]);
+
+  // Fetch related products
+  useEffect(() => {
+    if (product?.category) {
+      supabase.from('products').select('*').eq('category', product.category).eq('active', true).neq('id', product.id).limit(4)
+        .then(({ data }) => { if (data) setRelated(data as unknown as DBProduct[]); });
+    }
+  }, [product]);
 
   if (loading) {
     return (
@@ -84,8 +126,8 @@ export default function ProductDetail() {
   const reviews = (product.reviews || []) as Array<{ author: string; role: string; text: string; rating: number }>;
   const productUrl = `${window.location.origin}/producto/${product.slug}`;
   const whatsappUrl = getWhatsAppUrlForProduct(product.name, productUrl);
+  const isHtmlDescription = product.description && product.description.trim().startsWith('<');
 
-  // For cart compatibility
   const cartProduct = {
     id: product.id,
     name: product.name,
@@ -104,15 +146,6 @@ export default function ProductDetail() {
     rating: reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 5,
     reviews: reviews.length,
   };
-
-  // Fetch related products
-  const [related, setRelated] = useState<DBProduct[]>([]);
-  useEffect(() => {
-    if (product.category) {
-      supabase.from('products').select('*').eq('category', product.category).eq('active', true).neq('id', product.id).limit(4)
-        .then(({ data }) => { if (data) setRelated(data as unknown as DBProduct[]); });
-    }
-  }, [product]);
 
   return (
     <main className="py-8">
@@ -225,7 +258,11 @@ export default function ProductDetail() {
           </TabsList>
           <TabsContent value="descripcion" className="mt-6">
             {product.description ? (
-              <div className="prose prose-slate max-w-none product-description" dangerouslySetInnerHTML={{ __html: product.description }} />
+              isHtmlDescription ? (
+                <div className="prose prose-slate max-w-none product-description" dangerouslySetInnerHTML={{ __html: product.description }} />
+              ) : (
+                <p className="text-muted-foreground whitespace-pre-line">{product.description}</p>
+              )
             ) : (
               <p className="text-muted-foreground">No hay descripción disponible.</p>
             )}
