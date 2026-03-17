@@ -1,3 +1,4 @@
+// src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,9 @@ import { CartProvider } from "@/context/CartContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import AIChatWidget from "@/components/AIChatWidget";
+import SocialProofPopup from "@/components/SocialProofPopup";
+import CartDrawerCTA from "@/components/CartDrawerCTA";
 import Index from "./pages/Index";
 import Store from "./pages/Store";
 import ProductDetail from "./pages/ProductDetail";
@@ -44,7 +48,11 @@ const App = () => (
               </Routes>
             </div>
             <Footer />
+            {/* Componentes globales de conversión */}
             <WhatsAppButton />
+            <AIChatWidget />
+            <SocialProofPopup />
+            <CartDrawerCTA />
           </div>
         </BrowserRouter>
       </CartProvider>
