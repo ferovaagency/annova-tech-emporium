@@ -27,7 +27,7 @@ export default function Index() {
               <Link to="/tienda" className="bg-primary text-primary-foreground font-semibold px-8 py-3 rounded-lg text-lg hover:opacity-90 transition-opacity inline-flex items-center gap-2">
                 Comprar Ahora <ArrowRight className="w-5 h-5" />
               </Link>
-              <a href="https://wa.me/573057950550?text=Necesito%20cotización%20empresarial" target="_blank" rel="noopener noreferrer" className="border-2 border-accent-foreground/30 text-accent-foreground font-semibold px-8 py-3 rounded-lg text-lg hover:border-accent-foreground/60 transition-colors">
+              <a href={getWhatsAppUrl("Necesito cotización empresarial")} target="_blank" rel="noopener noreferrer" className="border-2 border-accent-foreground/30 text-accent-foreground font-semibold px-8 py-3 rounded-lg text-lg hover:border-accent-foreground/60 transition-colors">
                 Cotizar
               </a>
             </div>
