@@ -90,7 +90,7 @@ export default function ProductGenerator() {
 
   const resetForm = () => {
     setEditingId(null);
-    setName(''); setPrice(''); setSalePrice('');
+    setName(''); setPrice(''); setSalePrice(''); setSku('');
     setCondition('Nuevo'); setWarranty('12 meses con fabricante');
     setShortDesc(''); setDescription(''); setSpecsText('');
     setCategory(''); setBrand('');
