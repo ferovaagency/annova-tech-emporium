@@ -68,7 +68,7 @@ export default function MyAccount() {
         reference: availabilityData.order_id,
         customer_name: availabilityData.customer_name,
         customer_email: availabilityData.customer_email,
-        items: (availabilityData.items || []) as OrderItem[],
+        items: ((availabilityData.items as unknown) || []) as OrderItem[],
         total: Number(availabilityData.total || 0),
         status: availabilityData.status,
         created_at: availabilityData.created_at,
