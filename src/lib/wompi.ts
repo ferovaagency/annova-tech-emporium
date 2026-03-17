@@ -1,6 +1,7 @@
-export const WOMPI_PUBLIC_KEY = import.meta.env.VITE_WOMPI_PUBLIC_KEY as string;
-export const WOMPI_INTEGRITY_SECRET = import.meta.env.VITE_WOMPI_INTEGRITY_SECRET as string;
-export const WOMPI_REDIRECT_URL = import.meta.env.VITE_WOMPI_REDIRECT_URL as string;
+// Reemplaza las 3 primeras líneas por estas:
+export const WOMPI_PUBLIC_KEY = "pub_prod_eAdkqUXV8IfZ08V8ZnIn1nU5EkIQO0gC"; // ← tu key real aquí
+export const WOMPI_INTEGRITY_SECRET = "prod_integrity_ZGEMtqwAPJ3LUmRrVdqLFDKBmh9weDTj"; // ← tu clave de integridad aquí
+export const WOMPI_REDIRECT_URL = "https://annova-tech-emporium.lovable.app/pago-resultado";
 
 export async function generateWompiSignature(
   reference: string,
