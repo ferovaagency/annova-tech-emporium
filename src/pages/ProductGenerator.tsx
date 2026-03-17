@@ -79,8 +79,8 @@ export default function ProductGenerator() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
-
-  const slug = generateSlug(name);
+  const [aiNotes, setAiNotes] = useState('');
+  const [productSearch, setProductSearch] = useState('');
 
   const fetchData = useCallback(async () => {
     const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
