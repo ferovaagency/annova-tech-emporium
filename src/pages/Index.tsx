@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Shield, Truck, Headphones } from 'lucide-react';
 import { products, categories, formatPrice } from '@/data/products';
+import { getWhatsAppUrl } from '@/lib/whatsapp';
 import ProductCard from '@/components/ProductCard';
 
 export default function Index() {
