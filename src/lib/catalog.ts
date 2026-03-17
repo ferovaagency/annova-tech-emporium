@@ -9,15 +9,25 @@ export function normalizeCategorySlug(value: string) {
     .replace(/\s+/g, '-');
 }
 
+export function normalizeImageList(images: unknown): string[] {
+  if (!Array.isArray(images)) return [];
+
+  return images.filter((image): image is string => {
+    return typeof image === 'string' && image.trim().length > 0;
+  });
+}
+
 export function mapDbProduct(p: any): Product {
+  const normalizedImages = normalizeImageList(p.images);
+
   return {
     id: p.id,
     name: p.name,
     slug: p.slug,
     price: p.sale_price || p.price,
     oldPrice: p.sale_price ? p.price : undefined,
-    image: p.images?.[0] || '',
-    images: p.images || [],
+    image: normalizedImages[0] || '',
+    images: normalizedImages,
     category: p.category || '',
     categorySlug: normalizeCategorySlug(p.category || ''),
     brand: p.brand || '',
