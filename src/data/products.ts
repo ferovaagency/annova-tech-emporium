@@ -39,17 +39,16 @@ export const categories: Category[] = [
 
 export const products: Product[] = [];
 
-export const blogPosts = [
-  {
-    id: "1", slug: "guia-licencias-microsoft-empresas", title: "Guía Completa: Licencias Microsoft para Empresas en 2025", excerpt: "Descubre cómo elegir el plan de licenciamiento Microsoft ideal para tu empresa. Comparamos Microsoft 365, Windows y Server.", image: "https://images.unsplash.com/photo-1633419461186-7d40a38105ec?w=800&h=400&fit=crop", date: "2025-02-10", author: "Equipo Annova", content: "El licenciamiento corporativo de Microsoft puede parecer complejo, pero elegir el plan correcto es fundamental para la productividad de tu empresa."
-  },
-  {
-    id: "2", slug: "ventajas-equipos-reacondicionados", title: "5 Ventajas de Comprar Equipos Reacondicionados para tu Empresa", excerpt: "Los equipos reacondicionados ofrecen una excelente relación costo-beneficio sin sacrificar rendimiento.", image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&h=400&fit=crop", date: "2025-01-28", author: "Equipo Annova", content: "Los equipos de cómputo reacondicionados se han convertido en una opción inteligente para empresas que buscan optimizar su presupuesto tecnológico."
-  },
-  {
-    id: "3", slug: "importancia-ups-empresarial", title: "¿Por qué tu Empresa Necesita un UPS? Guía de Protección Eléctrica", excerpt: "Protege tus equipos y datos críticos con la solución de UPS adecuada.", image: "https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?w=800&h=400&fit=crop", date: "2025-01-15", author: "Equipo Annova", content: "Los cortes de energía y las fluctuaciones eléctricas pueden causar pérdida de datos y daño a equipos."
-  },
-];
+export const blogPosts: Array<{
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  date: string;
+  author: string;
+  content: string;
+}> = [];
 
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(price);
