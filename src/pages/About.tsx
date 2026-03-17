@@ -1,4 +1,5 @@
 import { Shield, Users, Award, Target } from 'lucide-react';
+import { getWhatsAppUrl } from '@/lib/whatsapp';
 
 export default function About() {
   return (
