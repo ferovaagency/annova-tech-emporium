@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Search, Loader2, X } from 'lucide-react';
+import { CheckCircle, XCircle, Search, Loader2, X, Eye, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AvailabilityRequest {
@@ -151,8 +151,19 @@ export default function AdminPanel() {
   };
 
   const handleToggleActive = async (product: DBProduct) => {
-    await supabase.from('products').update({ active: !product.active }).eq('id', product.id);
+    await supabase.from('products').update({ active: !product.active, updated_at: new Date().toISOString() }).eq('id', product.id);
     fetchProducts();
+  };
+
+  const handleDeleteProduct = async (product: DBProduct) => {
+    if (!confirm(`¿Eliminar '${product.name}'? Esta acción no se puede deshacer.`)) return;
+    const { error } = await supabase.from('products').delete().eq('id', product.id);
+    if (error) {
+      toast({ title: 'Error al eliminar', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Producto eliminado' });
+      fetchProducts();
+    }
   };
 
   const statusBadge = (status: string) => {
@@ -275,14 +286,24 @@ export default function AdminPanel() {
                         <TableCell className="text-sm">{formatPrice(Number(p.sale_price || p.price))}</TableCell>
                         <TableCell className="text-sm">{p.stock ?? '-'}</TableCell>
                         <TableCell>
-                          <Badge variant={p.active ? 'default' : 'secondary'}>
+                          <Badge className={p.active ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'}>
                             {p.active ? 'Activo' : 'Inactivo'}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button size="sm" variant="outline" onClick={() => handleToggleActive(p)}>
-                            {p.active ? 'Desactivar' : 'Activar'}
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" onClick={() => handleToggleActive(p)} title={p.active ? 'Desactivar' : 'Activar'}>
+                              {p.active ? <ToggleRight className="w-4 h-4 text-green-600" /> : <ToggleLeft className="w-4 h-4 text-muted-foreground" />}
+                            </Button>
+                            <a href={`/producto/${p.slug}`} target="_blank" rel="noopener noreferrer">
+                              <Button size="icon" variant="ghost" title="Ver producto">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </a>
+                            <Button size="icon" variant="ghost" onClick={() => handleDeleteProduct(p)} title="Eliminar" className="text-destructive hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

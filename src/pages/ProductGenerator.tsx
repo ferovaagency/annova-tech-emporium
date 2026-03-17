@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Upload, X, Sparkles, Eye, Pencil, Plus } from 'lucide-react';
+import { Loader2, Upload, X, Sparkles, Eye, Pencil, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface DBProduct {
   id: string;
@@ -39,8 +39,8 @@ const WARRANTY_OPTIONS = [
   "6 meses con fabricante",
   "12 meses con fabricante",
   "24 meses con fabricante",
-  "6 meses con Annova Soft",
-  "12 meses con Annova Soft",
+  "6 meses con AnnovaSoft",
+  "12 meses con AnnovaSoft",
   "Sin garantía",
 ];
 
@@ -48,7 +48,7 @@ export default function ProductGenerator() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state - simplified
+  // Form state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
@@ -62,7 +62,7 @@ export default function ProductGenerator() {
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // AI-generated fields (read-only after generation)
+  // AI-generated fields
   const [shortDesc, setShortDesc] = useState('');
   const [description, setDescription] = useState('');
   const [specsText, setSpecsText] = useState('');
@@ -211,7 +211,6 @@ export default function ProductGenerator() {
     if (imageUrls.length === 0) { toast({ title: 'Agrega al menos una imagen', variant: 'destructive' }); return; }
     setSaving(true);
 
-    // Anti-duplicate slug check
     let finalSlug = slug;
     if (!editingId) {
       let suffix = 1;
@@ -228,7 +227,6 @@ export default function ProductGenerator() {
       }
     }
 
-    // Ensure category exists
     if (category) {
       await supabase.from('categories').upsert({ name: category, slug: generateSlug(category) }, { onConflict: 'name' });
     }
@@ -278,6 +276,22 @@ export default function ProductGenerator() {
       fetchData();
     }
     setSaving(false);
+  };
+
+  const handleToggleActive = async (product: DBProduct) => {
+    await supabase.from('products').update({ active: !product.active, updated_at: new Date().toISOString() }).eq('id', product.id);
+    fetchData();
+  };
+
+  const handleDeleteProduct = async (product: DBProduct) => {
+    if (!confirm(`¿Eliminar '${product.name}'? Esta acción no se puede deshacer.`)) return;
+    const { error } = await supabase.from('products').delete().eq('id', product.id);
+    if (error) {
+      toast({ title: 'Error al eliminar', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Producto eliminado' });
+      fetchData();
+    }
   };
 
   if (loading) {
@@ -499,20 +513,26 @@ export default function ProductGenerator() {
                       <TableCell className="text-sm">{formatPrice(Number(p.price))}</TableCell>
                       <TableCell className="text-sm">{p.stock ?? '-'}</TableCell>
                       <TableCell>
-                        <Badge variant={p.active ? 'default' : 'secondary'}>
+                        <Badge className={p.active ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'}>
                           {p.active ? 'Activo' : 'Inactivo'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => loadProduct(p)}>
-                            <Pencil className="w-3 h-3 mr-1" /> Editar
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => handleToggleActive(p)} title={p.active ? 'Desactivar' : 'Activar'}>
+                            {p.active ? <ToggleRight className="w-4 h-4 text-green-600" /> : <ToggleLeft className="w-4 h-4 text-muted-foreground" />}
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => loadProduct(p)} title="Editar">
+                            <Pencil className="w-4 h-4" />
                           </Button>
                           <a href={`/producto/${p.slug}`} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-3 h-3 mr-1" /> Ver
+                            <Button size="icon" variant="ghost" title="Ver producto">
+                              <Eye className="w-4 h-4" />
                             </Button>
                           </a>
+                          <Button size="icon" variant="ghost" onClick={() => handleDeleteProduct(p)} title="Eliminar" className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
