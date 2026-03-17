@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, FileText, Loader2 } from 'lucide-react';
-import { blogPosts as localBlogPosts } from '@/data/products';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BlogPostRow {
@@ -21,23 +20,6 @@ export default function BlogPost() {
   const [post, setPost] = useState<BlogPostRow | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fallbackPost = useMemo(() => {
-    const localPost = localBlogPosts.find((item) => item.slug === slug);
-    if (!localPost) return null;
-
-    return {
-      id: localPost.id,
-      title: localPost.title,
-      slug: localPost.slug,
-      content: `<p>${localPost.content}</p>`,
-      excerpt: localPost.excerpt,
-      cover_image: localPost.image,
-      author: localPost.author,
-      created_at: localPost.date,
-      active: true,
-    } as BlogPostRow;
-  }, [slug]);
-
   useEffect(() => {
     const loadPost = async () => {
       try {
@@ -48,19 +30,14 @@ export default function BlogPost() {
           .eq('active', true)
           .maybeSingle();
 
-        if (data) {
-          setPost(data as BlogPostRow);
-          return;
-        }
-
-        setPost(fallbackPost);
+        setPost((data as BlogPostRow | null) || null);
       } finally {
         setLoading(false);
       }
     };
 
     loadPost();
-  }, [slug, fallbackPost]);
+  }, [slug]);
 
   if (loading) {
     return <main className="py-16 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /></main>;
@@ -69,6 +46,7 @@ export default function BlogPost() {
   if (!post) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
+        <FileText className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
         <h1 className="text-3xl font-bebas">Artículo no encontrado</h1>
         <Link to="/blog" className="mt-4 inline-block text-primary hover:underline">Volver al blog</Link>
       </div>
@@ -83,7 +61,7 @@ export default function BlogPost() {
         </Link>
 
         {post.cover_image ? (
-          <img src={post.cover_image} alt={post.title} className="mb-6 h-64 w-full rounded-xl object-cover md:h-80" />
+          <img src={post.cover_image} alt={post.title} className="mb-6 h-64 w-full rounded-xl object-cover object-center md:h-80" />
         ) : (
           <div className="mb-6 flex h-64 w-full items-center justify-center rounded-xl bg-muted text-muted-foreground md:h-80">
             <div className="flex flex-col items-center gap-2">
@@ -98,7 +76,7 @@ export default function BlogPost() {
           {new Date(post.created_at).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
           <span>· {post.author || 'AnnovaSoft'}</span>
         </div>
-        <h1 className="mb-6 text-3xl md:text-4xl font-bebas">{post.title}</h1>
+        <h1 className="mb-6 text-3xl font-bebas md:text-4xl">{post.title}</h1>
         <div className="blog-content" dangerouslySetInnerHTML={{ __html: post.content || `<p>${post.excerpt || ''}</p>` }} />
       </div>
     </main>
