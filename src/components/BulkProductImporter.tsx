@@ -112,14 +112,9 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
           `${row.name} ${row.brand || ''} ${row.description || ''} ${row.shortDescription || ''} ${row.notes || ''}`,
         );
 
-        let normalizedImages: string[] = [];
-        if (row.imageUrl) {
-          if (isExternalImageUrl(row.imageUrl)) {
-            normalizedImages = [await uploadRemoteImage(row.imageUrl)];
-          } else {
-            normalizedImages = [row.imageUrl];
-          }
-        }
+        const normalizedImages: string[] = row.imageUrl && row.imageUrl.trim()
+          ? [row.imageUrl.trim()]
+          : [];
 
         const baseSlug = generateSlug(row.name);
         let suffix = 1;
