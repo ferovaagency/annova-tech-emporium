@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/products';
 import { generateSlug } from '@/lib/slug';
-import { getParentCategory, isExternalImageUrl } from '@/lib/catalog';
+import { getParentCategory } from '@/lib/catalog';
 import { FIXED_PARENT_CATEGORIES } from '@/lib/category-visuals';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -102,7 +102,6 @@ export default function ProductGenerator() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [processingRemoteImage, setProcessingRemoteImage] = useState(false);
   const [shortDesc, setShortDesc] = useState('');
   const [description, setDescription] = useState('');
   const [specsText, setSpecsText] = useState('');
@@ -231,31 +230,12 @@ export default function ProductGenerator() {
     return parsed;
   };
 
-  const uploadRemoteImage = async (url: string) => {
-    const { data, error } = await supabase.functions.invoke('media-tools', {
-      body: {
-        action: 'download_remote_image',
-        url,
-      },
-    });
-
-    if (error) throw error;
-    if (!data?.publicUrl) throw new Error('No se recibió la URL final de la imagen');
-    return data.publicUrl as string;
+  const uploadRemoteImage = async (_url?: string) => {
+    throw new Error('La importación remota de imágenes está desactivada');
   };
 
-  const generateBlogCover = async (title: string, excerpt: string) => {
-    const { data, error } = await supabase.functions.invoke('media-tools', {
-      body: {
-        action: 'generate_blog_cover',
-        title,
-        excerpt,
-        category: blogIndustry,
-      },
-    });
-
-    if (error) throw error;
-    return (data?.publicUrl as string) || '';
+  const generateBlogCover = async (_title?: string, _excerpt?: string) => {
+    return '';
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -284,23 +264,8 @@ export default function ProductGenerator() {
     const input = imageUrlInput.trim();
     if (!input) return;
 
-    if (!isExternalImageUrl(input)) {
-      setImageUrls((prev) => [...prev, input]);
-      setImageUrlInput('');
-      return;
-    }
-
-    setProcessingRemoteImage(true);
-    try {
-      const uploadedUrl = await uploadRemoteImage(input);
-      setImageUrls((prev) => [...prev, uploadedUrl]);
-      setImageUrlInput('');
-      toast({ title: 'Imagen importada al almacenamiento del sitio' });
-    } catch (err: any) {
-      toast({ title: 'No se pudo importar la imagen', description: err.message, variant: 'destructive' });
-    } finally {
-      setProcessingRemoteImage(false);
-    }
+    setImageUrls((prev) => [...prev, input]);
+    setImageUrlInput('');
   };
 
   const removeImage = (idx: number) => setImageUrls((prev) => prev.filter((_, i) => i !== idx));
@@ -340,15 +305,9 @@ export default function ProductGenerator() {
   };
 
   const resolveProductImages = async () => {
-    const normalized = await Promise.all(
-      imageUrls.map(async (url) => {
-        if (typeof url !== 'string' || !url.trim()) return '';
-        if (!isExternalImageUrl(url)) return url.trim();
-        return uploadRemoteImage(url.trim());
-      }),
-    );
-
-    return normalized.filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+    return imageUrls
+      .map((url) => (typeof url === 'string' ? url.trim() : ''))
+      .filter((url): url is string => url.length > 0);
   };
 
   const handleSave = async () => {
@@ -670,16 +629,16 @@ export default function ProductGenerator() {
                 {imageUrls.length < 5 && (
                   <div className="flex flex-col gap-3 md:flex-row md:items-end">
                     <div>
-                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage || processingRemoteImage}>
+                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
                         {uploadingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                         Subir archivo
                       </Button>
                       <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" multiple className="hidden" onChange={handleFileUpload} />
                     </div>
                     <div className="flex flex-1 gap-2">
-                      <Input placeholder="URL de imagen" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} />
-                      <Button type="button" variant="outline" onClick={addImageUrl} disabled={processingRemoteImage || uploadingImage}>
-                        {processingRemoteImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      <Input placeholder="URL o ruta de imagen" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} />
+                      <Button type="button" variant="outline" onClick={addImageUrl} disabled={uploadingImage}>
+                        <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

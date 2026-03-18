@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { generateSlug } from '@/lib/slug';
-import { getParentCategory, isExternalImageUrl } from '@/lib/catalog';
+import { getParentCategory } from '@/lib/catalog';
 import { inferCategoryForBulkProduct, parseBulkImportFile, type BulkImportRow } from '@/lib/catalog-import';
 
 interface BulkProductImporterProps {
@@ -25,19 +25,6 @@ interface ImportResult {
 
 const DEFAULT_WARRANTY = '12 meses con fabricante';
 const DEFAULT_CONDITION = 'Nuevo';
-
-async function uploadRemoteImage(url: string) {
-  const { data, error } = await supabase.functions.invoke('media-tools', {
-    body: {
-      action: 'download_remote_image',
-      url,
-    },
-  });
-
-  if (error) throw error;
-  if (!data?.publicUrl) throw new Error('No se recibió la URL final de la imagen');
-  return data.publicUrl as string;
-}
 
 export default function BulkProductImporter({ onCompleted }: BulkProductImporterProps) {
   const { toast } = useToast();
@@ -125,14 +112,9 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
           `${row.name} ${row.brand || ''} ${row.description || ''} ${row.shortDescription || ''} ${row.notes || ''}`,
         );
 
-        let normalizedImages: string[] = [];
-        if (row.imageUrl) {
-          if (isExternalImageUrl(row.imageUrl)) {
-            normalizedImages = [await uploadRemoteImage(row.imageUrl)];
-          } else {
-            normalizedImages = [row.imageUrl];
-          }
-        }
+        const normalizedImages: string[] = row.imageUrl && row.imageUrl.trim()
+          ? [row.imageUrl.trim()]
+          : [];
 
         const baseSlug = generateSlug(row.name);
         let suffix = 1;
