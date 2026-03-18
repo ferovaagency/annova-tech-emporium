@@ -80,6 +80,66 @@ function buildCoverSvg(title: string, excerpt: string, category: string) {
   </svg>`;
 }
 
+async function uploadRemoteAsset(supabase: ReturnType<typeof createClient>, url: string, folder: string) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+      "User-Agent": "Mozilla/5.0 (compatible; AnnovaSoftBot/1.0)",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`No se pudo descargar la imagen (${response.status})`);
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (!contentType?.startsWith("image/")) {
+    throw new Error("La URL no devolvió una imagen válida");
+  }
+
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const ext = extensionFromContentType(contentType, url);
+  const fileName = `${folder}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(fileName, bytes, {
+    contentType,
+    upsert: false,
+  });
+
+  if (uploadError) throw uploadError;
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+  return { publicUrl: data.publicUrl, path: fileName };
+}
+
+function getCategorySearchQuery(categoryName: string, categorySlug = "") {
+  const slug = slugify(categorySlug || categoryName);
+  if (slug.includes("computador")) return "business laptop computer office";
+  if (slug.includes("licenc") || slug.includes("software")) return "software business computer office";
+  if (slug.includes("servidor") || slug.includes("server")) return "server rack data center";
+  return `${categoryName} technology business`;
+}
+
+async function findCommonsImage(query: string) {
+  const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=8&prop=imageinfo&iiprop=url&iiurlwidth=1600&format=json`;
+  const response = await fetch(apiUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; AnnovaSoftBot/1.0)",
+    },
+  });
+
+  if (!response.ok) throw new Error("No se pudo consultar imágenes públicas");
+  const payload = await response.json();
+  const pages = Object.values(payload?.query?.pages || {}) as Array<{ imageinfo?: Array<{ thumburl?: string; url?: string }> }>;
+
+  const preferred = pages.find((page) => {
+    const source = page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url || "";
+    return Boolean(source) && !/\.(svg|tif|tiff)$/i.test(source);
+  });
+
+  const sourceUrl = preferred?.imageinfo?.[0]?.thumburl || preferred?.imageinfo?.[0]?.url;
+  if (!sourceUrl) throw new Error("No se encontró una imagen pública para la categoría");
+  return sourceUrl;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -94,7 +154,7 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-    const { action, url, title, excerpt, category } = await req.json();
+    const { action, url, title, excerpt, category, categoryName, categorySlug } = await req.json();
 
     if (action === "download_remote_image") {
       if (!url || typeof url !== "string") {
@@ -104,40 +164,23 @@ serve(async (req) => {
         });
       }
 
-      const response = await fetch(url, {
-        headers: {
-          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-          "User-Agent": "Mozilla/5.0 (compatible; AnnovaSoftBot/1.0)",
-        },
+      const uploaded = await uploadRemoteAsset(supabase, url, "products");
+      return new Response(JSON.stringify(uploaded), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
 
-      if (!response.ok) {
-        return new Response(JSON.stringify({ error: `No se pudo descargar la imagen (${response.status})` }), {
+    if (action === "sync_category_image") {
+      if (!categoryName || typeof categoryName !== "string") {
+        return new Response(JSON.stringify({ error: "categoryName is required" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType?.startsWith("image/")) {
-        return new Response(JSON.stringify({ error: "La URL no devolvió una imagen válida" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      const ext = extensionFromContentType(contentType, url);
-      const fileName = `products/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from(BUCKET).upload(fileName, bytes, {
-        contentType,
-        upsert: false,
-      });
-
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
-
-      return new Response(JSON.stringify({ publicUrl: data.publicUrl, path: fileName }), {
+      const remoteUrl = await findCommonsImage(getCategorySearchQuery(categoryName, categorySlug));
+      const uploaded = await uploadRemoteAsset(supabase, remoteUrl, "categories");
+      return new Response(JSON.stringify({ ...uploaded, sourceUrl: remoteUrl }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

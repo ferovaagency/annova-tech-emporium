@@ -7,8 +7,8 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { X, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { mapDbProduct, normalizeCategorySlug } from '@/lib/catalog';
-import { FIXED_PARENT_CATEGORIES } from '@/lib/category-visuals';
+import { mapDbProduct } from '@/lib/catalog';
+import { useActiveCategories } from '@/hooks/useActiveCategories';
 
 function CategoryBadgeVisual({ name, image }: { name: string; image?: string }) {
   const hasRealImage = Boolean(image && image.trim() && image !== '/placeholder.svg');
@@ -23,6 +23,7 @@ type StoreProduct = Product & {
 
 export default function Store() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { categories } = useActiveCategories();
   const categoryFilter = searchParams.get('categoria') || '';
   const searchQuery = searchParams.get('q') || '';
   const [conditionFilter, setConditionFilter] = useState('');
@@ -73,10 +74,7 @@ export default function Store() {
     let result = [...allProducts];
 
     if (categoryFilter) {
-      result = result.filter((product) => {
-        const rawCategorySlug = normalizeCategorySlug((product as StoreProduct).rawCategory || '');
-        return product.categorySlug === categoryFilter || rawCategorySlug === categoryFilter;
-      });
+      result = result.filter((product) => product.categorySlug === categoryFilter);
     }
 
     if (conditionFilter) result = result.filter((p) => p.condition === conditionFilter);
@@ -101,7 +99,7 @@ export default function Store() {
     return result;
   }, [allProducts, categoryFilter, conditionFilter, brandFilter, attributeFilter, searchQuery, sortBy, priceRange]);
 
-  const activeCategory = FIXED_PARENT_CATEGORIES.find((category) => category.slug === categoryFilter);
+  const activeCategory = categories.find((category) => category.slug === categoryFilter);
 
   const clearFilters = () => {
     setSearchParams(searchQuery ? { q: searchQuery } : {});
@@ -141,7 +139,7 @@ export default function Store() {
               <div>
                 <h3 className="mb-3 font-montserrat text-sm font-semibold">Categoría</h3>
                 <div className="space-y-2">
-                  {FIXED_PARENT_CATEGORIES.map((cat) => (
+                  {categories.map((cat) => (
                     <button key={cat.slug} onClick={() => setSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), categoria: cat.slug })} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${categoryFilter === cat.slug ? 'bg-muted font-semibold text-primary' : ''}`}>{cat.name}</button>
                   ))}
                 </div>

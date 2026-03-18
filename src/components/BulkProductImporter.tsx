@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { Loader2, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Loader2, Sparkles, CheckCircle2, AlertCircle, FileSpreadsheet, Upload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { generateSlug } from '@/lib/slug';
 import { getParentCategory, isExternalImageUrl } from '@/lib/catalog';
-import { inferCategoryForBulkProduct, parseBulkProducts } from '@/lib/catalog-import';
+import { inferCategoryForBulkProduct, parseBulkImportFile, type BulkImportRow } from '@/lib/catalog-import';
 
 interface BulkProductImporterProps {
   onCompleted: () => Promise<void> | void;
 }
 
-type ImportStatus = 'pending' | 'processing' | 'completed' | 'error';
+type ImportStatus = 'pending' | 'processing' | 'ok' | 'error';
 
 interface ImportResult {
   rowNumber: number;
@@ -41,32 +41,59 @@ async function uploadRemoteImage(url: string) {
 
 export default function BulkProductImporter({ onCompleted }: BulkProductImporterProps) {
   const { toast } = useToast();
-  const [bulkInput, setBulkInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
+  const [fileName, setFileName] = useState('');
+  const [rows, setRows] = useState<BulkImportRow[]>([]);
   const [results, setResults] = useState<ImportResult[]>([]);
 
-  const handleProcessBulk = async () => {
-    const rows = parseBulkProducts(bulkInput);
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
+    try {
+      const parsedRows = await parseBulkImportFile(file);
+      setFileName(file.name);
+      setRows(parsedRows);
+      setResults(parsedRows.map((row) => ({
+        rowNumber: row.rowNumber,
+        name: row.name,
+        category: inferCategoryForBulkProduct(row),
+        status: 'pending',
+        message: 'En cola',
+      })));
+
+      toast({
+        title: 'Archivo cargado',
+        description: `${parsedRows.length} productos listos para procesar`,
+      });
+    } catch (error: any) {
+      setFileName('');
+      setRows([]);
+      setResults([]);
+      toast({
+        title: 'No se pudo leer el archivo',
+        description: error?.message || 'Verifica que sea un CSV o Excel válido',
+        variant: 'destructive',
+      });
+    } finally {
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  const handleProcessBulk = async () => {
     if (rows.length === 0) {
       return toast({
-        title: 'No hay productos para procesar',
-        description: 'Usa una línea por producto: nombre, precio, marca, imagen, sku, descripción corta, notas',
+        title: 'Carga un archivo primero',
+        description: 'Usa un archivo .csv o .xlsx con una fila por producto',
         variant: 'destructive',
       });
     }
 
     setProcessing(true);
-    setResults(rows.map((row) => ({
-      rowNumber: row.rowNumber,
-      name: row.name,
-      category: inferCategoryForBulkProduct(row),
-      status: 'pending',
-      message: 'En cola',
-    })));
-
     let completed = 0;
     let failed = 0;
+    const usedSlugs = new Set<string>();
 
     for (const row of rows) {
       setResults((prev) => prev.map((item) => item.rowNumber === row.rowNumber ? { ...item, status: 'processing', message: 'Generando ficha y guardando...' } : item));
@@ -79,14 +106,24 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
             price: row.price ?? null,
             condition: DEFAULT_CONDITION,
             warranty: DEFAULT_WARRANTY,
-            additionalNotes: [row.brand, row.shortDescription, row.notes, `Categoría obligatoria: ${inferredCategory}`].filter(Boolean).join(' | '),
+            additionalNotes: [
+              row.brand,
+              row.category ? `Categoría sugerida: ${row.category}` : null,
+              row.description,
+              row.shortDescription,
+              row.notes,
+              `Categoría obligatoria final: ${inferredCategory}`,
+            ].filter(Boolean).join(' | '),
           },
         });
 
         if (generated.error) throw generated.error;
 
         const aiData = generated.data || {};
-        const normalizedCategory = getParentCategory(aiData.category || inferredCategory, `${row.name} ${row.brand || ''} ${row.shortDescription || ''} ${row.notes || ''}`);
+        const normalizedCategory = getParentCategory(
+          row.category || aiData.category || inferredCategory,
+          `${row.name} ${row.brand || ''} ${row.description || ''} ${row.shortDescription || ''} ${row.notes || ''}`,
+        );
 
         let normalizedImages: string[] = [];
         if (row.imageUrl) {
@@ -98,13 +135,19 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
         }
 
         const baseSlug = generateSlug(row.name);
-        let finalSlug = baseSlug;
         let suffix = 1;
+        let finalSlug = baseSlug;
         while (true) {
-          const candidate = suffix === 1 ? finalSlug : `${baseSlug}-${suffix}`;
+          const candidate = suffix === 1 ? baseSlug : `${baseSlug}-${suffix}`;
+          if (usedSlugs.has(candidate)) {
+            suffix += 1;
+            continue;
+          }
+
           const { data: existing } = await supabase.from('products').select('id').eq('slug', candidate).maybeSingle();
           if (!existing) {
             finalSlug = candidate;
+            usedSlugs.add(candidate);
             break;
           }
           suffix += 1;
@@ -120,8 +163,8 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
           brand: row.brand || aiData.brand || null,
           condition: DEFAULT_CONDITION,
           warranty: DEFAULT_WARRANTY,
-          short_description: row.shortDescription || aiData.short_description || null,
-          description: aiData.description || row.notes || null,
+          short_description: row.shortDescription || row.description || aiData.short_description || null,
+          description: aiData.description || row.description || row.notes || null,
           specs: aiData.specs || null,
           meta_title: aiData.meta_title || null,
           meta_description: aiData.meta_description || null,
@@ -135,7 +178,7 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
         if (error) throw error;
 
         completed += 1;
-        setResults((prev) => prev.map((item) => item.rowNumber === row.rowNumber ? { ...item, category: normalizedCategory, status: 'completed', message: 'Producto guardado en la base de datos' } : item));
+        setResults((prev) => prev.map((item) => item.rowNumber === row.rowNumber ? { ...item, category: normalizedCategory, status: 'ok', message: 'Producto guardado en la base de datos' } : item));
       } catch (error: any) {
         failed += 1;
         setResults((prev) => prev.map((item) => item.rowNumber === row.rowNumber ? { ...item, status: 'error', message: error?.message || 'No se pudo procesar' } : item));
@@ -144,32 +187,43 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
 
     setProcessing(false);
     await onCompleted();
-    toast({ title: 'Carga masiva finalizada', description: `${completed} completados · ${failed} con error` });
+    toast({ title: 'Carga masiva finalizada', description: `${completed} OK · ${failed} con error` });
   };
 
   return (
     <div className="rounded-lg border bg-card p-6">
       <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl font-bebas">Carga masiva</h2>
-          <p className="text-xs text-muted-foreground">Una línea por producto: nombre, precio, marca, imagen, sku, descripción corta, notas.</p>
+          <h2 className="text-xl font-bebas">Carga masiva por archivo</h2>
+          <p className="text-xs text-muted-foreground">Sube un archivo .csv o .xlsx con columnas como: name, description, price, brand, category, image_url, sku.</p>
         </div>
-        <Badge variant="secondary">Categorías automáticas: Computadores · Licenciamiento · Servidores</Badge>
+        <Badge variant="secondary">Categorías finales: Computadores · Licenciamiento · Servidores</Badge>
       </div>
 
-      <Textarea
-        value={bulkInput}
-        onChange={(event) => setBulkInput(event.target.value)}
-        placeholder="Laptop Dell Latitude 5440, 4200000, Dell, https://..., LAT-5440, Portátil empresarial de 14 pulgadas, Core i5 13th gen&#10;Windows 11 Pro Licencia, 980000, Microsoft, https://..., WIN11PRO, Licencia original, Para empresas"
-        className="min-h-[180px]"
-      />
+      <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Archivo de productos</label>
+          <Input
+            ref={inputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+            onChange={handleFileChange}
+          />
+          <p className="text-xs text-muted-foreground">Cada fila representa un producto. Se evita duplicar productos por slug.</p>
+        </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted-foreground">El sistema genera la ficha completa por IA, clasifica automáticamente y guarda cada producto con su propio estado.</p>
-        <Button onClick={handleProcessBulk} disabled={processing}>
-          {processing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-          {processing ? 'Procesando carga masiva...' : 'Procesar y guardar'}
+        <Button onClick={handleProcessBulk} disabled={processing || rows.length === 0}>
+          {processing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+          {processing ? 'Procesando archivo...' : 'Procesar archivo'}
         </Button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1">
+          <FileSpreadsheet className="h-3.5 w-3.5" />
+          {fileName || 'Sin archivo cargado'}
+        </span>
+        <span>{rows.length} filas detectadas</span>
       </div>
 
       {results.length > 0 && (
@@ -177,12 +231,12 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
           {results.map((result) => (
             <div key={result.rowNumber} className="flex flex-col gap-2 rounded-lg border p-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-sm font-medium">#{result.rowNumber} · {result.name}</p>
+                <p className="text-sm font-medium">Fila {result.rowNumber} · {result.name}</p>
                 <p className="text-xs text-muted-foreground">{result.category} · {result.message}</p>
               </div>
-              <Badge variant={result.status === 'completed' ? 'default' : result.status === 'error' ? 'destructive' : 'secondary'} className="gap-1">
-                {result.status === 'completed' ? <CheckCircle2 className="h-3.5 w-3.5" /> : result.status === 'error' ? <AlertCircle className="h-3.5 w-3.5" /> : <Loader2 className={`h-3.5 w-3.5 ${result.status === 'processing' ? 'animate-spin' : ''}`} />}
-                {result.status === 'pending' ? 'Pendiente' : result.status === 'processing' ? 'Procesando' : result.status === 'completed' ? 'Completado' : 'Error'}
+              <Badge variant={result.status === 'ok' ? 'default' : result.status === 'error' ? 'destructive' : 'secondary'} className="gap-1">
+                {result.status === 'ok' ? <CheckCircle2 className="h-3.5 w-3.5" /> : result.status === 'error' ? <AlertCircle className="h-3.5 w-3.5" /> : result.status === 'processing' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {result.status === 'pending' ? 'Pendiente' : result.status === 'processing' ? 'Procesando' : result.status === 'ok' ? 'OK' : 'Error'}
               </Badge>
             </div>
           ))}

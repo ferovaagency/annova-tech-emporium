@@ -1,22 +1,7 @@
 import { Product } from '@/data/products';
-import { buildDynamicCategories, normalizeText } from '@/lib/category-visuals';
+import { buildDynamicCategories, getParentCategory, normalizeCategorySlug } from '@/lib/category-visuals';
 
-export { buildDynamicCategories };
-
-export function normalizeCategorySlug(value: string) {
-  return normalizeText(value).replace(/\s+/g, '-');
-}
-
-export function getParentCategory(input?: string | null, context = ''): string {
-  const text = normalizeText(`${input || ''} ${context}`);
-
-  if (text.includes('licenciamiento')) return 'Licenciamiento';
-  if (text.includes('servidores')) return 'Servidores';
-  if (text.includes('computadores')) return 'Computadores';
-  if (['server', 'servidor', 'rack', 'tower', 'xeon', 'datacenter', 'dl380', 'poweredge', 'proliant', 'nas', 'storage', 'raid', 'blade', 'switch', 'firewall', 'ups'].some((keyword) => text.includes(keyword))) return 'Servidores';
-  if (['licencia', 'licenciamiento', 'software', 'microsoft 365', 'office', 'windows', 'antivirus', 'subscription', 'suscripcion', 'adobe', 'autodesk', 'sql server', 'visual studio', 'project', 'visio'].some((keyword) => text.includes(keyword))) return 'Licenciamiento';
-  return 'Computadores';
-}
+export { buildDynamicCategories, getParentCategory, normalizeCategorySlug };
 
 export function normalizeImageList(images: unknown): string[] {
   if (!Array.isArray(images)) return [];
