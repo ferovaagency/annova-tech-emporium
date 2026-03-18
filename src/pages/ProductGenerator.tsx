@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/products';
 import { generateSlug } from '@/lib/slug';
-import { getParentCategory, isExternalImageUrl } from '@/lib/catalog';
+import { getParentCategory } from '@/lib/catalog';
 import { FIXED_PARENT_CATEGORIES } from '@/lib/category-visuals';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
