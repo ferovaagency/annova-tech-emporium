@@ -230,11 +230,11 @@ export default function ProductGenerator() {
     return parsed;
   };
 
-  const uploadRemoteImage = async () => {
+  const uploadRemoteImage = async (_url?: string) => {
     throw new Error('La importación remota de imágenes está desactivada');
   };
 
-  const generateBlogCover = async () => {
+  const generateBlogCover = async (_title?: string, _excerpt?: string) => {
     return '';
   };
 
