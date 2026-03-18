@@ -264,23 +264,8 @@ export default function ProductGenerator() {
     const input = imageUrlInput.trim();
     if (!input) return;
 
-    if (!isExternalImageUrl(input)) {
-      setImageUrls((prev) => [...prev, input]);
-      setImageUrlInput('');
-      return;
-    }
-
-    setProcessingRemoteImage(true);
-    try {
-      const uploadedUrl = await uploadRemoteImage(input);
-      setImageUrls((prev) => [...prev, uploadedUrl]);
-      setImageUrlInput('');
-      toast({ title: 'Imagen importada al almacenamiento del sitio' });
-    } catch (err: any) {
-      toast({ title: 'No se pudo importar la imagen', description: err.message, variant: 'destructive' });
-    } finally {
-      setProcessingRemoteImage(false);
-    }
+    setImageUrls((prev) => [...prev, input]);
+    setImageUrlInput('');
   };
 
   const removeImage = (idx: number) => setImageUrls((prev) => prev.filter((_, i) => i !== idx));
