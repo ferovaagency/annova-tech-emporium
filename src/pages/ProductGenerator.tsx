@@ -556,31 +556,35 @@ export default function ProductGenerator() {
           </TabsList>
 
           <TabsContent value="productos">
-            <div className="mb-6 rounded-lg border bg-card p-4">
-              <label className="mb-2 block text-sm font-medium">Editar producto existente</label>
-              <Select
-                value={editingId || ''}
-                onValueChange={(value) => {
-                  if (value === '__new__') {
-                    resetForm();
-                    return;
-                  }
-                  const selected = products.find((product) => product.id === value);
-                  if (selected) loadProduct(selected);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar producto o crear nuevo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__new__">+ Crear nuevo producto</SelectItem>
-                  {products.map((product) => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="mb-6 space-y-6">
+              <div className="rounded-lg border bg-card p-4">
+                <label className="mb-2 block text-sm font-medium">Editar producto existente</label>
+                <Select
+                  value={editingId || ''}
+                  onValueChange={(value) => {
+                    if (value === '__new__') {
+                      resetForm();
+                      return;
+                    }
+                    const selected = products.find((product) => product.id === value);
+                    if (selected) loadProduct(selected);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar producto o crear nuevo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__new__">+ Crear nuevo producto</SelectItem>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <BulkProductImporter onCompleted={fetchData} />
             </div>
 
             <div className="space-y-6">
