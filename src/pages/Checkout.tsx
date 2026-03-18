@@ -26,20 +26,20 @@ export default function Checkout() {
     GA.beginCheckout(totalPrice);
   }, [totalPrice]);
 
-  const whatsappUrl = useMemo(() => getCartWhatsAppUrl(
-    items.map(({ product, quantity }) => ({ name: product.name, quantity, price: product.price })),
-    totalPrice,
-    email,
-  ), [items, totalPrice, email]);
+  const whatsappUrl = useMemo(
+    () =>
+      getCartWhatsAppUrl(
+        items.map(({ product, quantity }) => ({ name: product.name, quantity, price: product.price })),
+        totalPrice,
+        email,
+      ),
+    [items, totalPrice, email],
+  );
 
   const handleEmailBlur = async () => {
     if (!email) return;
     try {
-      const { data } = await supabase
-        .from('customers')
-        .select('name, phone')
-        .eq('email', email)
-        .single();
+      const { data } = await supabase.from('customers').select('name, phone').eq('email', email).single();
 
       if (data) {
         if (data.name && !fullName) setFullName(data.name);
@@ -65,12 +65,15 @@ export default function Checkout() {
     try {
       const reference = generateOrderReference();
 
-      await supabase.from('customers').upsert({
-        email,
-        name: fullName,
-        phone,
-        last_order_at: new Date().toISOString(),
-      }, { onConflict: 'email' });
+      await supabase.from('customers').upsert(
+        {
+          email,
+          name: fullName,
+          phone,
+          last_order_at: new Date().toISOString(),
+        },
+        { onConflict: 'email' },
+      );
 
       const { error } = await supabase.from('availability_requests').insert({
         order_id: reference,
@@ -151,7 +154,7 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full text-lg py-3 h-auto">
+              <Button type="submit" className="h-auto w-full py-3 text-lg">
                 Solicitar disponibilidad
               </Button>
             </form>
