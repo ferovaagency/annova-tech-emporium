@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { Loader2, Sparkles, CheckCircle2, AlertCircle, FileSpreadsheet, Upload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,7 @@ export default function BulkProductImporter({ onCompleted }: BulkProductImporter
   const [rows, setRows] = useState<BulkImportRow[]>([]);
   const [results, setResults] = useState<ImportResult[]>([]);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 

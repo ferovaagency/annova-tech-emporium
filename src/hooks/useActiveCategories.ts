@@ -26,7 +26,7 @@ async function syncCategoryImage(row: CategoryRow) {
 
   await (supabase as any)
     .from('categories')
-    .update({ image_url: data.publicUrl, updated_at: new Date().toISOString() })
+    .update({ image_url: data.publicUrl })
     .eq('id', row.id);
 
   return data.publicUrl as string;
