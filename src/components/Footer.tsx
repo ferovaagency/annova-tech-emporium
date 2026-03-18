@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Mail, MapPin, MessageCircle } from 'lucide-react';
 import { useActiveCategories } from '@/hooks/useActiveCategories';
 import { getAdvisorWhatsAppUrl } from '@/lib/whatsapp-context';
-import logoImg from '@/assets/logo-annovasoft-new.png';
 
 const asesores = [
   { name: 'Sergio Muñoz', phoneLabel: '+57 320 257 9393' },
@@ -18,7 +17,6 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <img src={logoImg} alt="AnnovaSoft" className="mb-4 h-12 w-auto" />
             <p className="mb-4 text-sm opacity-80">Annova Software y Accesorios SAS, soluciones tecnológicas empresariales en Colombia.</p>
             <div className="space-y-2 text-sm opacity-80">
               {asesores.map((asesor) => (
