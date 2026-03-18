@@ -1,233 +1,124 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { MessageCircle, ShoppingCart, CheckCircle2, Clock3 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/data/products';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Loader2, XCircle, ExternalLink, ShoppingCart, Clock, AlertTriangle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { buildWompiCheckoutUrl, generateOrderReference } from '@/lib/wompi';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { generateOrderReference } from '@/lib/wompi';
+import { getCartWhatsAppUrl } from '@/lib/whatsapp-context';
 import { GA } from '@/hooks/useAnalytics';
 
-type AvailabilityStatus = 'idle' | 'pending' | 'available' | 'unavailable' | 'timeout';
-
-interface SuggestedProduct {
-  name: string;
-  slug: string;
-  price: number;
-}
-
-const TIMER_SECONDS = 180; // 3 minutes
-
 export default function Checkout() {
-  const { items, totalPrice, totalItems, clearCart } = useCart();
+  const { items, totalPrice, totalItems } = useCart();
   const { toast } = useToast();
-
-  // Form fields
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [department, setDepartment] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [nit, setNit] = useState('');
-
-  // Availability modal
   const [modalOpen, setModalOpen] = useState(false);
-  const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>('idle');
-  const [adminNotes, setAdminNotes] = useState('');
-  const [suggestedProducts, setSuggestedProducts] = useState<SuggestedProduct[]>([]);
-  const [requestId, setRequestId] = useState<string | null>(null);
-  const [orderRef, setOrderRef] = useState('');
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
+  const [saving, setSaving] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+  const [requestReference, setRequestReference] = useState('');
 
   useEffect(() => {
     GA.beginCheckout(totalPrice);
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
+  }, [totalPrice]);
 
-  // Autocomplete from customers table
+  const whatsappUrl = useMemo(() => getCartWhatsAppUrl(
+    items.map(({ product, quantity }) => ({ name: product.name, quantity, price: product.price })),
+    totalPrice,
+    email,
+  ), [items, totalPrice, email]);
+
   const handleEmailBlur = async () => {
     if (!email) return;
     try {
       const { data } = await supabase
         .from('customers')
-        .select('name, phone, city')
+        .select('name, phone')
         .eq('email', email)
         .single();
+
       if (data) {
         if (data.name && !fullName) setFullName(data.name);
         if (data.phone && !phone) setPhone(data.phone);
-        if (data.city && !city) setCity(data.city);
         toast({ title: 'Encontramos tus datos guardados. Puedes editarlos si necesitas.' });
       }
-    } catch { /* no previous customer data */ }
+    } catch {
+      // ignore
+    }
   };
 
-  const startTimer = () => {
-    setTimeLeft(TIMER_SECONDS);
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          if (pollingRef.current) clearInterval(pollingRef.current);
-          setAvailabilityStatus(s => s === 'pending' ? 'timeout' : s);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const startPolling = (id: string) => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
-    pollingRef.current = setInterval(async () => {
-      const { data } = await supabase
-        .from('availability_requests')
-        .select('status, admin_notes, suggested_products')
-        .eq('id', id)
-        .single();
-
-      if (data && data.status !== 'pending') {
-        setAvailabilityStatus(data.status === 'available' ? 'available' : 'unavailable');
-        setAdminNotes(data.admin_notes || '');
-        setSuggestedProducts((data.suggested_products as unknown as SuggestedProduct[]) || []);
-        if (pollingRef.current) clearInterval(pollingRef.current);
-        if (timerRef.current) clearInterval(timerRef.current);
-      }
-    }, 5000);
-  };
-
-  const createRequest = async () => {
-    const ref = generateOrderReference();
-    setOrderRef(ref);
+  const openOptions = (event: React.FormEvent) => {
+    event.preventDefault();
     setModalOpen(true);
-    setAvailabilityStatus('pending');
-    startTimer();
-
-    await supabase.from('customers').upsert({
-      email,
-      name: fullName,
-      phone,
-      city,
-      last_order_at: new Date().toISOString(),
-    }, { onConflict: 'email' });
-
-    await supabase.functions.invoke('send-notification', {
-      body: { type: 'new_customer', payload: { email, name: fullName, phone, city } },
-    });
-
-    const { data, error } = await supabase.from('availability_requests').insert({
-      order_id: ref,
-      customer_name: fullName,
-      customer_phone: phone,
-      customer_email: email,
-      items: items.map(({ product, quantity }) => ({
-        name: product.name,
-        quantity,
-        price: product.price,
-        slug: product.slug,
-      })),
-      total: totalPrice,
-      status: 'pending',
-    }).select('id').single();
-
-    if (error) {
-      console.error('Error creating availability request:', error);
-      setAvailabilityStatus('idle');
-      setModalOpen(false);
-      return;
-    }
-
-    if (data) {
-      setRequestId(data.id);
-      startPolling(data.id);
-    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createRequest();
-  };
+  const handleWaitForConfirmation = async () => {
+    if (!fullName || !email || !phone) {
+      return toast({ title: 'Nombre, email y teléfono son requeridos', variant: 'destructive' });
+    }
 
-  const handleProceedToPayment = async () => {
-    GA.purchase(orderRef, totalPrice);
-    GA.availabilityTimer('available');
+    setSaving(true);
+    try {
+      const reference = generateOrderReference();
 
-    await supabase.from('orders').upsert({
-      reference: orderRef,
-      customer_name: fullName,
-      customer_email: email,
-      customer_phone: phone || null,
-      total: totalPrice,
-      items: items.map(({ product, quantity }) => ({
-        id: product.id,
-        name: product.name,
-        quantity,
-        price: product.price,
-        slug: product.slug,
-      })),
-      shipping_address: {
-        address,
-        city,
-        department,
-        companyName,
-        nit,
-      },
-      status: 'pending',
-      status_history: [
-        {
-          status: 'pending',
-          at: new Date().toISOString(),
-          source: 'checkout',
+      await supabase.from('customers').upsert({
+        email,
+        name: fullName,
+        phone,
+        last_order_at: new Date().toISOString(),
+      }, { onConflict: 'email' });
+
+      const { error } = await supabase.from('availability_requests').insert({
+        order_id: reference,
+        customer_name: fullName,
+        customer_phone: phone,
+        customer_email: email,
+        items: items.map(({ product, quantity }) => ({
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          quantity,
+          price: product.price,
+        })),
+        total: totalPrice,
+        status: 'pending',
+      });
+
+      if (error) throw error;
+
+      await supabase.functions.invoke('send-notification', {
+        body: {
+          type: 'new_customer',
+          payload: {
+            name: fullName,
+            email,
+            phone,
+            city: 'Pendiente de validación',
+            source: 'availability_request',
+            orderReference: reference,
+          },
         },
-      ],
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'reference' });
+      });
 
-    const url = await buildWompiCheckoutUrl({
-      reference: orderRef,
-      amountInCents: totalPrice * 100,
-      customerEmail: email,
-      customerFullName: fullName,
-      customerPhoneNumber: phone,
-    });
-    clearCart();
-    window.location.href = url;
-  };
-
-  const handleRetry = async () => {
-    setAvailabilityStatus('idle');
-    if (pollingRef.current) clearInterval(pollingRef.current);
-    if (timerRef.current) clearInterval(timerRef.current);
-    await createRequest();
-  };
-
-  const closeAndReset = () => {
-    setModalOpen(false);
-    setAvailabilityStatus('idle');
-    if (pollingRef.current) clearInterval(pollingRef.current);
-    if (timerRef.current) clearInterval(timerRef.current);
-  };
-
-  const formatTimer = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${String(sec).padStart(2, '0')}`;
+      setRequestReference(reference);
+      setRequestSent(true);
+      setModalOpen(false);
+      toast({ title: 'Solicitud enviada', description: 'Te confirmaremos disponibilidad en máximo 48 horas.' });
+    } catch (error: any) {
+      toast({ title: 'No se pudo registrar la solicitud', description: error?.message || 'Intenta nuevamente.', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (items.length === 0) {
     return (
-      <main className="py-16 text-center container mx-auto px-4">
-        <h1 className="text-3xl font-bebas mb-4">No hay productos en tu carrito</h1>
+      <main className="container mx-auto px-4 py-16 text-center">
+        <h1 className="mb-4 text-3xl font-bebas">No hay productos en tu carrito</h1>
         <a href="/tienda" className="text-primary hover:underline">Ir a la tienda</a>
       </main>
     );
@@ -236,188 +127,94 @@ export default function Checkout() {
   return (
     <main className="py-8">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bebas mb-8">Checkout <span className="text-primary">Empresarial</span></h1>
+        <h1 className="mb-8 text-3xl font-bebas">Solicitar <span className="text-primary">Disponibilidad</span></h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-card rounded-lg border p-6">
-                <h2 className="text-xl font-bebas mb-4">Datos del Contacto</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input placeholder="Nombre completo *" required value={fullName} onChange={e => setFullName(e.target.value)} />
-                  <Input placeholder="Email *" type="email" required value={email} onChange={e => setEmail(e.target.value)} onBlur={handleEmailBlur} />
-                  <Input placeholder="Teléfono *" type="tel" required value={phone} onChange={e => setPhone(e.target.value)} />
-                  <Input placeholder="Empresa" value={companyName} onChange={e => setCompanyName(e.target.value)} />
-                  <Input placeholder="NIT" value={nit} onChange={e => setNit(e.target.value)} />
+            <form onSubmit={openOptions} className="space-y-6">
+              <div className="rounded-lg border bg-card p-6">
+                <h2 className="mb-4 text-xl font-bebas">Datos de contacto</h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Input placeholder="Nombre completo *" required value={fullName} onChange={(event) => setFullName(event.target.value)} />
+                  <Input placeholder="Email *" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} onBlur={handleEmailBlur} />
+                  <Input placeholder="Teléfono *" type="tel" required value={phone} onChange={(event) => setPhone(event.target.value)} className="md:col-span-2" />
                 </div>
               </div>
 
-              <div className="bg-card rounded-lg border p-6">
-                <h2 className="text-xl font-bebas mb-4">Dirección de Entrega</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input placeholder="Dirección *" required className="md:col-span-2" value={address} onChange={e => setAddress(e.target.value)} />
-                  <Input placeholder="Ciudad *" required value={city} onChange={e => setCity(e.target.value)} />
-                  <Input placeholder="Departamento *" required value={department} onChange={e => setDepartment(e.target.value)} />
+              <div className="rounded-lg border bg-card p-6">
+                <div className="flex items-start gap-3">
+                  <Clock3 className="mt-0.5 h-5 w-5 text-primary" />
+                  <div>
+                    <h2 className="text-lg font-semibold">Confirmación en máximo 48 horas</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">No se realiza pago en línea. Primero validamos disponibilidad y luego te contactamos por el canal que elijas.</p>
+                  </div>
                 </div>
               </div>
 
-              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:opacity-90 text-lg py-3 h-auto">
-                Confirmar pedido
+              <Button type="submit" className="w-full text-lg py-3 h-auto">
+                Solicitar disponibilidad
               </Button>
-              <p className="text-xs text-muted-foreground text-center">Se verificará la disponibilidad antes de proceder al pago</p>
             </form>
+
+            {requestSent && (
+              <div className="mt-6 rounded-lg border bg-card p-6">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
+                  <div>
+                    <h2 className="text-lg font-semibold">Solicitud recibida</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">Nuestro equipo te confirmará disponibilidad en máximo 48 horas.</p>
+                    <p className="mt-3 text-xs text-muted-foreground">Referencia: {requestReference}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Order summary */}
-          <div className="bg-card rounded-lg border p-6 h-fit sticky top-40">
-            <h2 className="text-xl font-bebas mb-4">Resumen ({totalItems})</h2>
-            <div className="space-y-3 mb-4">
+          <div className="sticky top-40 h-fit rounded-lg border bg-card p-6">
+            <h2 className="mb-4 text-xl font-bebas">Resumen ({totalItems})</h2>
+            <div className="mb-4 space-y-3">
               {items.map(({ product, quantity }) => (
                 <div key={product.id} className="flex gap-3">
-                  <img src={product.image} alt="" className="w-12 h-12 rounded object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium line-clamp-1">{product.name}</p>
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="h-12 w-12 rounded object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded bg-muted text-xs text-muted-foreground">Sin imagen</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-1 text-xs font-medium">{product.name}</p>
                     <p className="text-xs text-muted-foreground">x{quantity}</p>
                   </div>
                   <span className="text-sm font-medium">{formatPrice(product.price * quantity)}</span>
                 </div>
               ))}
             </div>
-            <div className="border-t pt-3 flex justify-between font-bold text-lg">
+            <div className="flex justify-between border-t pt-3 text-lg font-bold">
               <span>Total</span>
               <span className="text-primary">{formatPrice(totalPrice)}</span>
             </div>
-            {orderRef && (
-              <p className="text-xs text-muted-foreground mt-2">Ref: {orderRef}</p>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Availability confirmation modal */}
-      <Dialog open={modalOpen} onOpenChange={(open) => {
-        if (!open && availabilityStatus === 'pending') return;
-        if (!open) closeAndReset();
-      }}>
-        <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => {
-          if (availabilityStatus === 'pending') e.preventDefault();
-        }}>
-          {availabilityStatus === 'pending' && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl">Verificando disponibilidad de tu pedido</DialogTitle>
-                <DialogDescription>Un asesor está revisando tu pedido ahora mismo</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="text-center">
-                  <div className="inline-flex items-center gap-2 bg-muted rounded-full px-4 py-2 mb-4">
-                    <Clock className="w-5 h-5 text-primary" />
-                    <span className="text-2xl font-bold font-mono">{formatTimer(timeLeft)}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {items.map(({ product, quantity }) => (
-                    <div key={product.id} className="flex justify-between text-sm">
-                      <span>{product.name} x{quantity}</span>
-                      <span className="font-medium">{formatPrice(product.price * quantity)}</span>
-                    </div>
-                  ))}
-                  <div className="border-t pt-2 flex justify-between font-bold">
-                    <span>Total</span>
-                    <span className="text-primary">{formatPrice(totalPrice)}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span className="text-sm">Esperando confirmación del asesor...</span>
-                </div>
-              </div>
-            </>
-          )}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Elige cómo continuar</DialogTitle>
+            <DialogDescription>Podemos atenderte por WhatsApp de inmediato o registrar tu solicitud para confirmarte disponibilidad en máximo 48 horas.</DialogDescription>
+          </DialogHeader>
 
-          {availabilityStatus === 'available' && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl text-green-600 flex items-center gap-2">
-                  <CheckCircle className="w-6 h-6" /> ¡Tu pedido está confirmado!
-                </DialogTitle>
-                <DialogDescription>Procede al pago seguro con Wompi</DialogDescription>
-              </DialogHeader>
-              {adminNotes && (
-                <div className="bg-muted rounded-lg p-3 text-sm">
-                  <p className="font-medium mb-1">Nota del asesor:</p>
-                  <p className="text-muted-foreground">{adminNotes}</p>
-                </div>
-              )}
-              <Button onClick={handleProceedToPayment} className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-3 h-auto">
-                Pagar ahora con Wompi
+          <div className="space-y-3 py-2">
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <Button type="button" className="w-full justify-center gap-2">
+                <MessageCircle className="h-4 w-4" />
+                Hablar con un asesor
               </Button>
-            </>
-          )}
-
-          {availabilityStatus === 'unavailable' && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl text-red-600 flex items-center gap-2">
-                  <XCircle className="w-6 h-6" /> Algunos productos no están disponibles
-                </DialogTitle>
-              </DialogHeader>
-              {adminNotes && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
-                  <p className="font-medium mb-1 text-red-800">Nota del asesor:</p>
-                  <p className="text-red-700">{adminNotes}</p>
-                </div>
-              )}
-              {suggestedProducts.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium mb-2">Productos sugeridos como alternativa:</p>
-                  <div className="space-y-2">
-                    {suggestedProducts.map((sp, i) => (
-                      <div key={i} className="flex items-center justify-between bg-muted rounded-lg p-3">
-                        <div>
-                          <p className="text-sm font-medium">{sp.name}</p>
-                          <p className="text-xs text-primary font-bold">{formatPrice(sp.price)}</p>
-                        </div>
-                        <a href={`/producto/${sp.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
-                          Ver producto <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">Estos productos son sugerencias. No se agregan automáticamente a tu carrito.</p>
-                </div>
-              )}
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={closeAndReset}>
-                  <ShoppingCart className="w-4 h-4 mr-2" /> Modificar mi pedido
-                </Button>
-                <Button className="flex-1" onClick={() => { closeAndReset(); window.location.href = '/tienda'; }}>
-                  Explorar tienda
-                </Button>
-              </div>
-            </>
-          )}
-
-          {availabilityStatus === 'timeout' && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl flex items-center gap-2">
-                  <AlertTriangle className="w-6 h-6 text-yellow-500" /> El tiempo de verificación venció
-                </DialogTitle>
-                <DialogDescription>
-                  Puedes esperar a que un asesor te contacte o intentarlo de nuevo más tarde.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={handleRetry}>
-                  Intentar de nuevo
-                </Button>
-                <Button className="flex-1" onClick={() => { closeAndReset(); window.location.href = '/tienda'; }}>
-                  Ir a la tienda
-                </Button>
-              </div>
-            </>
-          )}
+            </a>
+            <Button type="button" variant="outline" className="w-full justify-center gap-2" onClick={handleWaitForConfirmation} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
+              Esperar confirmación
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </main>
