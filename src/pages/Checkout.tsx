@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MessageCircle, ShoppingCart, CheckCircle2, Clock3 } from 'lucide-react';
+import { MessageCircle, ShoppingCart, CheckCircle2, Clock3, Loader2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/data/products';
 import { Input } from '@/components/ui/input';
