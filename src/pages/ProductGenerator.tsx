@@ -629,16 +629,16 @@ export default function ProductGenerator() {
                 {imageUrls.length < 5 && (
                   <div className="flex flex-col gap-3 md:flex-row md:items-end">
                     <div>
-                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage || processingRemoteImage}>
+                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
                         {uploadingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                         Subir archivo
                       </Button>
                       <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" multiple className="hidden" onChange={handleFileUpload} />
                     </div>
                     <div className="flex flex-1 gap-2">
-                      <Input placeholder="URL de imagen" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} />
-                      <Button type="button" variant="outline" onClick={addImageUrl} disabled={processingRemoteImage || uploadingImage}>
-                        {processingRemoteImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      <Input placeholder="URL o ruta de imagen" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} />
+                      <Button type="button" variant="outline" onClick={addImageUrl} disabled={uploadingImage}>
+                        <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
