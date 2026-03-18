@@ -605,7 +605,20 @@ export default function ProductGenerator() {
                     <Input placeholder="Precio oferta COP (opcional)" type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} />
                   </div>
 
-                  <Input placeholder="SKU / Referencia (opcional)" value={sku} onChange={(e) => setSku(e.target.value)} />
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Input placeholder="SKU / Referencia (opcional)" value={sku} onChange={(e) => setSku(e.target.value)} />
+                    <Select value={category || '__auto__'} onValueChange={(value) => setCategory(value === '__auto__' ? '' : value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Categoría opcional" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__auto__">Asignación automática</SelectItem>
+                        {FIXED_PARENT_CATEGORIES.map((option) => (
+                          <SelectItem key={option.slug} value={option.name}>{option.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div>
                     <Label className="mb-2 block text-sm font-medium">Estado del producto</Label>
