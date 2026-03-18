@@ -29,11 +29,7 @@ function CategoryVisual({ name, image }: { name: string; image?: string }) {
     return <img src={image} alt={`${name} AnnovaSoft tecnología empresarial Colombia`} title={name} className="h-32 w-full object-cover object-center transition-transform duration-300 group-hover:scale-110" loading="lazy" />;
   }
 
-  return (
-    <div className="flex h-32 w-full items-center justify-center bg-gradient-to-br from-primary via-accent to-accent px-3 text-center text-sm font-bold text-primary-foreground">
-      {name}
-    </div>
-  );
+  return <div className="h-32 w-full bg-muted" aria-hidden="true" />;
 }
 
 export default function Index() {
