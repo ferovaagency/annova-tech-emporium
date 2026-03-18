@@ -35,7 +35,7 @@ serve(async (req) => {
           <p style="margin:0 0 8px;">Sergio Muñoz: +57 320 257 9393</p>
           <p style="margin:0 0 8px;">Isabella Garzón: +57 350 750 1878</p>
           <p style="margin:0 0 8px;">AnnovaSoft: +57 305 795 0550</p>
-          <p style="margin:0 0 8px;">ventas@annovasoft.co</p>
+          <p style="margin:0 0 8px;">administrativo@annovasoft.com · Comercial1@annovasoft.com · Gerencia@annovasoft.com</p>
           <p style="margin:0;">Cra 15 # 76-53 Oficina 204 Bogotá</p>
         </div>
         <p style="font-size:13px;color:#6b7280;margin:0;">Annova Software y Accesorios SAS</p>

@@ -31,10 +31,27 @@ export interface Category {
 }
 
 export const categories: Category[] = [
-  { name: "Software y Licencias", slug: "software-licencias", icon: "💿", description: "Licencias corporativas, Windows, Microsoft 365, antivirus y más", image: "https://images.unsplash.com/photo-1607799279861-4dd421887fc9?w=400&h=300&fit=crop" },
-  { name: "Servidores", slug: "servidores", icon: "🖥️", description: "Servidores empresariales y soluciones para datacenter", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop" },
-  { name: "UPS y Energía", slug: "ups-energia", icon: "🔋", description: "UPS empresariales y soluciones de respaldo energético", image: "https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?w=400&h=300&fit=crop" },
-  { name: "Computadores", slug: "computadores", icon: "💻", description: "Portátiles, equipos de escritorio nuevos y reacondicionados", image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop" },
+  {
+    name: "Computadores",
+    slug: "computadores",
+    icon: "💻",
+    description: "Portátiles, desktops y estaciones de trabajo empresariales",
+    image: "/placeholder.svg",
+  },
+  {
+    name: "Licenciamiento",
+    slug: "licenciamiento",
+    icon: "💿",
+    description: "Licencias, suscripciones y software corporativo",
+    image: "/placeholder.svg",
+  },
+  {
+    name: "Servidores",
+    slug: "servidores",
+    icon: "🖥️",
+    description: "Servidores, datacenter e infraestructura empresarial",
+    image: "/placeholder.svg",
+  },
 ];
 
 export const products: Product[] = [];

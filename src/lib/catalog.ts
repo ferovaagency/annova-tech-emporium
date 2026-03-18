@@ -1,12 +1,30 @@
-import { Product, type Category } from '@/data/products';
-import { generateSlug } from '@/lib/slug';
+import { Product, type Category, categories as fixedCategories } from '@/data/products';
 
-export function normalizeCategorySlug(value: string) {
+const SERVER_KEYWORDS = [
+  'server', 'servidor', 'rack', 'tower', 'xeon', 'datacenter', 'dl380', 'poweredge', 'proliant', 'nas', 'storage', 'raid', 'blade', 'switch', 'firewall', 'ups'
+];
+const LICENSE_KEYWORDS = [
+  'licencia', 'licenciamiento', 'software', 'microsoft 365', 'office', 'windows', 'antivirus', 'subscription', 'suscripcion', 'adobe', 'autodesk', 'sql server', 'visual studio', 'project', 'visio'
+];
+
+function normalizeText(value: string) {
   return value
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '-');
+    .trim();
+}
+
+export function normalizeCategorySlug(value: string) {
+  return normalizeText(value).replace(/\s+/g, '-');
+}
+
+export function getParentCategory(input?: string | null, context = ''): string {
+  const text = normalizeText(`${input || ''} ${context}`);
+
+  if (SERVER_KEYWORDS.some((keyword) => text.includes(keyword))) return 'Servidores';
+  if (LICENSE_KEYWORDS.some((keyword) => text.includes(keyword))) return 'Licenciamiento';
+  return 'Computadores';
 }
 
 export function normalizeImageList(images: unknown): string[] {
@@ -19,6 +37,7 @@ export function normalizeImageList(images: unknown): string[] {
 
 export function mapDbProduct(p: any): Product {
   const normalizedImages = normalizeImageList(p.images);
+  const normalizedCategory = getParentCategory(p.category, `${p.name || ''} ${p.description || ''} ${JSON.stringify(p.specs || {})}`);
 
   return {
     id: p.id,
@@ -28,8 +47,8 @@ export function mapDbProduct(p: any): Product {
     oldPrice: p.sale_price ? p.price : undefined,
     image: normalizedImages[0] || '',
     images: normalizedImages,
-    category: p.category || '',
-    categorySlug: normalizeCategorySlug(p.category || ''),
+    category: normalizedCategory,
+    categorySlug: normalizeCategorySlug(normalizedCategory),
     brand: p.brand || '',
     condition: (p.condition || 'Nuevo') as Product['condition'],
     shortDescription: p.short_description || '',
@@ -41,19 +60,8 @@ export function mapDbProduct(p: any): Product {
   };
 }
 
-export function buildDynamicCategories(names: string[]): Category[] {
-  return names
-    .filter(Boolean)
-    .map((name) => name.trim())
-    .filter((name, index, array) => array.findIndex((item) => item.toLowerCase() === name.toLowerCase()) === index)
-    .sort((a, b) => a.localeCompare(b, 'es'))
-    .map((name) => ({
-      name,
-      slug: generateSlug(name),
-      icon: '📦',
-      description: `Productos disponibles en ${name}`,
-      image: '/placeholder.svg',
-    }));
+export function buildDynamicCategories(_names: string[]): Category[] {
+  return fixedCategories;
 }
 
 export function isExternalImageUrl(imageUrl: string) {
