@@ -12,7 +12,7 @@ serve(async (req) => {
     const body = await req.json();
     const { reference, transactionId, customerName, items = [], total } = body;
 
-    const recipients = ['administrativo@annovasoft.com', 'Comercial1@annovasoft.com', 'gerencia@annovasoft.com'];
+    const recipients = ['administrativo@annovasoft.com', 'Comercial1@annovasoft.com', 'Gerencia@annovasoft.com'];
     const subject = `Nuevo pedido pagado - ${reference}`;
 
     const rows = (items as Array<{ name: string; quantity: number; price: number }>).map(

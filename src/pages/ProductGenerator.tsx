@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/products';
 import { generateSlug } from '@/lib/slug';
-import { isExternalImageUrl } from '@/lib/catalog';
+import { getParentCategory, isExternalImageUrl } from '@/lib/catalog';
+import { FIXED_PARENT_CATEGORIES } from '@/lib/category-visuals';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import BulkProductImporter from '@/components/BulkProductImporter';
 import { Loader2, Upload, X, Sparkles, Eye, Pencil, Plus, Trash2, ToggleLeft, ToggleRight, Search, ImageIcon } from 'lucide-react';
 
 interface DBProduct {
@@ -381,13 +383,7 @@ export default function ProductGenerator() {
         throw new Error('No se pudo obtener una URL válida para las imágenes');
       }
 
-      if (category) {
-        await supabase.from('categories').upsert({ name: category, slug: generateSlug(category) }, { onConflict: 'name' });
-      }
-
-      if (brand) {
-        await supabase.from('brands').upsert({ name: brand }, { onConflict: 'name' });
-      }
+      const resolvedCategory = category || getParentCategory('', `${name} ${brand} ${shortDesc} ${description} ${specsText}`);
 
       const productData = {
         name,
@@ -560,31 +556,35 @@ export default function ProductGenerator() {
           </TabsList>
 
           <TabsContent value="productos">
-            <div className="mb-6 rounded-lg border bg-card p-4">
-              <label className="mb-2 block text-sm font-medium">Editar producto existente</label>
-              <Select
-                value={editingId || ''}
-                onValueChange={(value) => {
-                  if (value === '__new__') {
-                    resetForm();
-                    return;
-                  }
-                  const selected = products.find((product) => product.id === value);
-                  if (selected) loadProduct(selected);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar producto o crear nuevo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__new__">+ Crear nuevo producto</SelectItem>
-                  {products.map((product) => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="mb-6 space-y-6">
+              <div className="rounded-lg border bg-card p-4">
+                <label className="mb-2 block text-sm font-medium">Editar producto existente</label>
+                <Select
+                  value={editingId || ''}
+                  onValueChange={(value) => {
+                    if (value === '__new__') {
+                      resetForm();
+                      return;
+                    }
+                    const selected = products.find((product) => product.id === value);
+                    if (selected) loadProduct(selected);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar producto o crear nuevo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__new__">+ Crear nuevo producto</SelectItem>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <BulkProductImporter onCompleted={fetchData} />
             </div>
 
             <div className="space-y-6">
@@ -605,7 +605,20 @@ export default function ProductGenerator() {
                     <Input placeholder="Precio oferta COP (opcional)" type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} />
                   </div>
 
-                  <Input placeholder="SKU / Referencia (opcional)" value={sku} onChange={(e) => setSku(e.target.value)} />
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Input placeholder="SKU / Referencia (opcional)" value={sku} onChange={(e) => setSku(e.target.value)} />
+                    <Select value={category || '__auto__'} onValueChange={(value) => setCategory(value === '__auto__' ? '' : value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Categoría opcional" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__auto__">Asignación automática</SelectItem>
+                        {FIXED_PARENT_CATEGORIES.map((option) => (
+                          <SelectItem key={option.slug} value={option.name}>{option.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div>
                     <Label className="mb-2 block text-sm font-medium">Estado del producto</Label>
@@ -691,12 +704,10 @@ export default function ProductGenerator() {
                   <Textarea value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="Pega specs del fabricante, características especiales, casos de uso..." />
                 </div>
 
-                {(category || brand) && (
-                  <div className="mb-4 flex gap-3">
-                    {category && <Badge variant="secondary">Categoría: {category}</Badge>}
-                    {brand && <Badge variant="secondary">Marca: {brand}</Badge>}
-                  </div>
-                )}
+                <div className="mb-4 flex flex-wrap gap-3">
+                  <Badge variant="secondary">Categoría: {category || 'Automática'}</Badge>
+                  {brand && <Badge variant="secondary">Marca: {brand}</Badge>}
+                </div>
 
                 {shortDesc && (
                   <div className="mb-4">

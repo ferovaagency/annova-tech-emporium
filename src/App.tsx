@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useLocation, BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -27,6 +26,7 @@ import AdminPanel from "./pages/AdminPanel";
 import ProductGenerator from "./pages/ProductGenerator";
 import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
@@ -41,43 +41,6 @@ function ScrollToTop() {
 }
 
 const App = () => {
-  useEffect(() => {
-    console.log(`Ejecutar en Supabase si blog_posts no existe:
-
-create table if not exists blog_posts (
-
-  id uuid default gen_random_uuid() primary key,
-
-  title text not null,
-
-  slug text unique not null,
-
-  content text,
-
-  excerpt text,
-
-  cover_image text,
-
-  meta_title text,
-
-  meta_description text,
-
-  author text default 'AnnovaSoft',
-
-  status text default 'draft',
-
-  active boolean default false,
-
-  created_at timestamp default now(),
-
-  updated_at timestamp default now()
-);
-
-create policy if not exists 'blog_public' on blog_posts for all using (true) with check (true);
-
-alter table blog_posts enable row level security;`);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
