@@ -230,31 +230,12 @@ export default function ProductGenerator() {
     return parsed;
   };
 
-  const uploadRemoteImage = async (url: string) => {
-    const { data, error } = await supabase.functions.invoke('media-tools', {
-      body: {
-        action: 'download_remote_image',
-        url,
-      },
-    });
-
-    if (error) throw error;
-    if (!data?.publicUrl) throw new Error('No se recibió la URL final de la imagen');
-    return data.publicUrl as string;
+  const uploadRemoteImage = async () => {
+    throw new Error('La importación remota de imágenes está desactivada');
   };
 
-  const generateBlogCover = async (title: string, excerpt: string) => {
-    const { data, error } = await supabase.functions.invoke('media-tools', {
-      body: {
-        action: 'generate_blog_cover',
-        title,
-        excerpt,
-        category: blogIndustry,
-      },
-    });
-
-    if (error) throw error;
-    return (data?.publicUrl as string) || '';
+  const generateBlogCover = async () => {
+    return '';
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
