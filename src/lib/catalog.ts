@@ -1,19 +1,7 @@
-import { Product, type Category, categories as fixedCategories } from '@/data/products';
+import { Product } from '@/data/products';
+import { buildDynamicCategories, normalizeText } from '@/lib/category-visuals';
 
-const SERVER_KEYWORDS = [
-  'server', 'servidor', 'rack', 'tower', 'xeon', 'datacenter', 'dl380', 'poweredge', 'proliant', 'nas', 'storage', 'raid', 'blade', 'switch', 'firewall', 'ups'
-];
-const LICENSE_KEYWORDS = [
-  'licencia', 'licenciamiento', 'software', 'microsoft 365', 'office', 'windows', 'antivirus', 'subscription', 'suscripcion', 'adobe', 'autodesk', 'sql server', 'visual studio', 'project', 'visio'
-];
-
-function normalizeText(value: string) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
-}
+export { buildDynamicCategories };
 
 export function normalizeCategorySlug(value: string) {
   return normalizeText(value).replace(/\s+/g, '-');
@@ -22,8 +10,11 @@ export function normalizeCategorySlug(value: string) {
 export function getParentCategory(input?: string | null, context = ''): string {
   const text = normalizeText(`${input || ''} ${context}`);
 
-  if (SERVER_KEYWORDS.some((keyword) => text.includes(keyword))) return 'Servidores';
-  if (LICENSE_KEYWORDS.some((keyword) => text.includes(keyword))) return 'Licenciamiento';
+  if (text.includes('licenciamiento')) return 'Licenciamiento';
+  if (text.includes('servidores')) return 'Servidores';
+  if (text.includes('computadores')) return 'Computadores';
+  if (['server', 'servidor', 'rack', 'tower', 'xeon', 'datacenter', 'dl380', 'poweredge', 'proliant', 'nas', 'storage', 'raid', 'blade', 'switch', 'firewall', 'ups'].some((keyword) => text.includes(keyword))) return 'Servidores';
+  if (['licencia', 'licenciamiento', 'software', 'microsoft 365', 'office', 'windows', 'antivirus', 'subscription', 'suscripcion', 'adobe', 'autodesk', 'sql server', 'visual studio', 'project', 'visio'].some((keyword) => text.includes(keyword))) return 'Licenciamiento';
   return 'Computadores';
 }
 
@@ -37,7 +28,8 @@ export function normalizeImageList(images: unknown): string[] {
 
 export function mapDbProduct(p: any): Product {
   const normalizedImages = normalizeImageList(p.images);
-  const normalizedCategory = getParentCategory(p.category, `${p.name || ''} ${p.description || ''} ${JSON.stringify(p.specs || {})}`);
+  const rawCategory = p.category || '';
+  const normalizedCategory = getParentCategory(rawCategory, `${p.name || ''} ${p.description || ''} ${JSON.stringify(p.specs || {})}`);
 
   return {
     id: p.id,
@@ -57,11 +49,8 @@ export function mapDbProduct(p: any): Product {
     rating: 4.8,
     reviews: Array.isArray(p.reviews) ? p.reviews.length : 0,
     featured: Boolean(p.featured),
-  };
-}
-
-export function buildDynamicCategories(_names: string[]): Category[] {
-  return fixedCategories;
+    rawCategory,
+  } as Product;
 }
 
 export function isExternalImageUrl(imageUrl: string) {

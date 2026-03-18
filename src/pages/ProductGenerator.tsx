@@ -704,12 +704,10 @@ export default function ProductGenerator() {
                   <Textarea value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="Pega specs del fabricante, características especiales, casos de uso..." />
                 </div>
 
-                {(category || brand) && (
-                  <div className="mb-4 flex gap-3">
-                    {category && <Badge variant="secondary">Categoría: {category}</Badge>}
-                    {brand && <Badge variant="secondary">Marca: {brand}</Badge>}
-                  </div>
-                )}
+                <div className="mb-4 flex flex-wrap gap-3">
+                  <Badge variant="secondary">Categoría: {category || 'Automática'}</Badge>
+                  {brand && <Badge variant="secondary">Marca: {brand}</Badge>}
+                </div>
 
                 {shortDesc && (
                   <div className="mb-4">
