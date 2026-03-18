@@ -305,15 +305,9 @@ export default function ProductGenerator() {
   };
 
   const resolveProductImages = async () => {
-    const normalized = await Promise.all(
-      imageUrls.map(async (url) => {
-        if (typeof url !== 'string' || !url.trim()) return '';
-        if (!isExternalImageUrl(url)) return url.trim();
-        return uploadRemoteImage(url.trim());
-      }),
-    );
-
-    return normalized.filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+    return imageUrls
+      .map((url) => (typeof url === 'string' ? url.trim() : ''))
+      .filter((url): url is string => url.length > 0);
   };
 
   const handleSave = async () => {
