@@ -102,7 +102,6 @@ export default function ProductGenerator() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [processingRemoteImage, setProcessingRemoteImage] = useState(false);
   const [shortDesc, setShortDesc] = useState('');
   const [description, setDescription] = useState('');
   const [specsText, setSpecsText] = useState('');
