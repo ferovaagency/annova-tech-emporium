@@ -383,13 +383,7 @@ export default function ProductGenerator() {
         throw new Error('No se pudo obtener una URL válida para las imágenes');
       }
 
-      if (category) {
-        await supabase.from('categories').upsert({ name: category, slug: generateSlug(category) }, { onConflict: 'name' });
-      }
-
-      if (brand) {
-        await supabase.from('brands').upsert({ name: brand }, { onConflict: 'name' });
-      }
+      const resolvedCategory = category || getParentCategory('', `${name} ${brand} ${shortDesc} ${description} ${specsText}`);
 
       const productData = {
         name,
