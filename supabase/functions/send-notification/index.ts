@@ -11,7 +11,7 @@ serve(async (req) => {
   try {
     const { type, payload } = await req.json();
 
-    const recipients = ['administrativo@annovasoft.com', 'Comercial1@annovasoft.com', 'gerencia@annovasoft.com'];
+    const recipients = ['administrativo@annovasoft.com', 'Comercial1@annovasoft.com', 'Gerencia@annovasoft.com'];
 
     const subject = type === 'new_customer'
       ? `Nuevo cliente - ${payload?.name || 'sin nombre'}`
