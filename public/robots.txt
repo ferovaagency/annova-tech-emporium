@@ -28,4 +28,4 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-Sitemap: https://annova-tech-emporium.lovable.app/sitemap.xml
+Sitemap: https://annovasoft.com/sitemap.xml
