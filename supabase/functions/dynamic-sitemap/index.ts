@@ -14,6 +14,10 @@ const staticPages = [
   { loc: "/blog", priority: "1.0", changefreq: "daily" },
   { loc: "/contacto", priority: "1.0", changefreq: "daily" },
   { loc: "/nosotros", priority: "0.8", changefreq: "monthly" },
+  { loc: "/tienda?categoria=computadores", priority: "0.9", changefreq: "daily" },
+  { loc: "/tienda?categoria=licenciamiento", priority: "0.9", changefreq: "daily" },
+  { loc: "/tienda?categoria=servidores", priority: "0.9", changefreq: "daily" },
+  { loc: "/tienda?categoria=workstations", priority: "0.9", changefreq: "daily" },
 ];
 
 function toISODate(d: string | null): string {

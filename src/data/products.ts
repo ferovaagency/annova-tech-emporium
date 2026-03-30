@@ -52,8 +52,14 @@ export const categories: Category[] = [
     description: "Servidores, datacenter e infraestructura empresarial",
     image: "/placeholder.svg",
   },
+  {
+    name: "Workstations",
+    slug: "workstations",
+    icon: "🖥️",
+    description: "Estaciones de trabajo de alto rendimiento para diseño, ingeniería y renderizado",
+    image: "/placeholder.svg",
+  },
 ];
-
 export const products: Product[] = [];
 
 export const blogPosts: Array<{
