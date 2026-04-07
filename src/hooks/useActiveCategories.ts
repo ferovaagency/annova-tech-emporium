@@ -11,7 +11,10 @@ type CategoryRow = {
   parent_id?: string | null;
 };
 
-const FIXED_SLUGS = FIXED_PARENT_CATEGORIES.map((category) => category.slug);
+const ALL_CATEGORY_SLUGS = [
+  ...FIXED_PARENT_CATEGORIES.map((c) => c.slug),
+  ...Object.values(SUBCATEGORIES).flat().map((c) => c.slug),
+];
 
 export function useActiveCategories() {
   const [categoryRows, setCategoryRows] = useState<CategoryRow[]>([]);
