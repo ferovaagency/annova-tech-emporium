@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/products';
 import { generateSlug } from '@/lib/slug';
 import { getParentCategory } from '@/lib/catalog';
-import { FIXED_PARENT_CATEGORIES } from '@/lib/category-visuals';
+import { FIXED_PARENT_CATEGORIES, SUBCATEGORIES } from '@/lib/category-visuals';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -572,9 +572,12 @@ export default function ProductGenerator() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__auto__">Asignación automática</SelectItem>
-                        {FIXED_PARENT_CATEGORIES.map((option) => (
-                          <SelectItem key={option.slug} value={option.name}>{option.name}</SelectItem>
-                        ))}
+                        {FIXED_PARENT_CATEGORIES.flatMap((option) => [
+                          <SelectItem key={option.slug} value={option.name}>{option.name}</SelectItem>,
+                          ...(SUBCATEGORIES[option.slug] || []).map((sub) => (
+                            <SelectItem key={sub.slug} value={sub.name}>&nbsp;&nbsp;↳ {sub.name}</SelectItem>
+                          )),
+                        ])}
                       </SelectContent>
                     </Select>
                   </div>

@@ -95,6 +95,18 @@ export function buildCategoryRecord(name: string): Category {
 
 export const FIXED_PARENT_CATEGORIES: Category[] = ['Computadores', 'Licenciamiento', 'Servidores', 'Workstations'].map(buildCategoryRecord);
 
+export const SUBCATEGORIES: Record<string, Category[]> = {
+  servidores: [
+    {
+      name: 'Partes para servidores',
+      slug: 'partes-para-servidores',
+      icon: '🔧',
+      description: 'Discos, RAM, fuentes y componentes para servidores',
+      image: servidoresImage,
+    },
+  ],
+};
+
 export function buildDynamicCategories(names: string[]): Category[] {
   const uniqueNames = Array.from(new Set([
     ...FIXED_PARENT_CATEGORIES.map((category) => category.name),

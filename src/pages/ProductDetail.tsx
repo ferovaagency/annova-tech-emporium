@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { getWhatsAppUrlForProduct } from '@/lib/whatsapp';
 import { normalizeCategorySlug } from '@/lib/catalog';
+import { SUBCATEGORIES } from '@/lib/category-visuals';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import { GA } from '@/hooks/useAnalytics';
 import { useDocumentSeo } from '@/hooks/useDocumentSeo';
@@ -105,13 +106,27 @@ export default function ProductDetail() {
   const primaryImage = images[0] || '';
   const categorySlug = product.category ? normalizeCategorySlug(product.category) : '';
 
+  // Find parent category for subcategory breadcrumb
+  let parentCategoryName = '';
+  let parentCategorySlug = '';
+  for (const [pSlug, subs] of Object.entries(SUBCATEGORIES)) {
+    if (subs.some((s) => s.slug === categorySlug)) {
+      parentCategorySlug = pSlug;
+      parentCategoryName = pSlug.charAt(0).toUpperCase() + pSlug.slice(1);
+      break;
+    }
+  }
+
   const cartProduct = { id: product.id, name: product.name, slug: product.slug, price: product.sale_price || product.price, oldPrice: product.sale_price ? product.price : undefined, image: primaryImage, images, category: product.category || '', categorySlug, brand: product.brand || '', condition: (product.condition || 'Nuevo') as any, shortDescription: product.short_description || '', description: product.description || '', specs, rating: reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 5, reviews: reviews.length };
 
   return (
     <main className="py-8">
       <div className="container mx-auto px-4">
         <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">Inicio</Link><ChevronRight className="h-3 w-3" /><Link to="/tienda" className="hover:text-foreground">Tienda</Link><ChevronRight className="h-3 w-3" />{product.category && <><Link to={`/tienda?categoria=${categorySlug}`} className="hover:text-foreground">{product.category}</Link><ChevronRight className="h-3 w-3" /></>}<span className="truncate font-medium text-foreground">{product.name}</span>
+          <Link to="/" className="hover:text-foreground">Inicio</Link><ChevronRight className="h-3 w-3" /><Link to="/tienda" className="hover:text-foreground">Tienda</Link><ChevronRight className="h-3 w-3" />
+          {parentCategoryName && <><Link to={`/tienda?categoria=${parentCategorySlug}`} className="hover:text-foreground">{parentCategoryName}</Link><ChevronRight className="h-3 w-3" /></>}
+          {product.category && <><Link to={`/tienda?categoria=${categorySlug}`} className="hover:text-foreground">{product.category}</Link><ChevronRight className="h-3 w-3" /></>}
+          <span className="truncate font-medium text-foreground">{product.name}</span>
         </nav>
 
         <div className="mb-12 grid grid-cols-1 gap-8 lg:grid-cols-2">

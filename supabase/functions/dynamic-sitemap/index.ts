@@ -18,6 +18,7 @@ const staticPages = [
   { loc: "/tienda?categoria=licenciamiento", priority: "0.9", changefreq: "daily" },
   { loc: "/tienda?categoria=servidores", priority: "0.9", changefreq: "daily" },
   { loc: "/tienda?categoria=workstations", priority: "0.9", changefreq: "daily" },
+  { loc: "/tienda?categoria=partes-para-servidores", priority: "0.8", changefreq: "daily" },
 ];
 
 function toISODate(d: string | null): string {

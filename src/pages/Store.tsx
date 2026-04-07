@@ -9,6 +9,7 @@ import { X, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProduct } from '@/lib/catalog';
 import { useActiveCategories } from '@/hooks/useActiveCategories';
+import { SUBCATEGORIES } from '@/lib/category-visuals';
 
 function CategoryBadgeVisual({ name, image }: { name: string; image?: string }) {
   const hasRealImage = Boolean(image && image.trim() && image !== '/placeholder.svg');
@@ -74,7 +75,10 @@ export default function Store() {
     let result = [...allProducts];
 
     if (categoryFilter) {
-      result = result.filter((product) => product.categorySlug === categoryFilter);
+      // If parent category selected, also include subcategory products
+      const childSlugs = (SUBCATEGORIES[categoryFilter] || []).map((s) => s.slug);
+      const allSlugs = [categoryFilter, ...childSlugs];
+      result = result.filter((product) => allSlugs.includes(product.categorySlug));
     }
 
     if (conditionFilter) result = result.filter((p) => p.condition === conditionFilter);
@@ -138,10 +142,15 @@ export default function Store() {
             <div className="sticky top-40 space-y-6 rounded-lg border bg-card p-4">
               <div>
                 <h3 className="mb-3 font-montserrat text-sm font-semibold">Categoría</h3>
-                <div className="space-y-2">
-                  {categories.map((cat) => (
-                    <button key={cat.slug} onClick={() => setSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), categoria: cat.slug })} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${categoryFilter === cat.slug ? 'bg-muted font-semibold text-primary' : ''}`}>{cat.name}</button>
-                  ))}
+                <div className="space-y-1">
+                  {categories.map((cat) => {
+                    const isChild = !!(cat as any).parentSlug;
+                    return (
+                      <button key={cat.slug} onClick={() => setSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), categoria: cat.slug })} className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${categoryFilter === cat.slug ? 'bg-muted font-semibold text-primary' : ''} ${isChild ? 'pl-6 text-xs' : ''}`}>
+                        {isChild ? `↳ ${cat.name}` : cat.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div>

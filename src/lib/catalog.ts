@@ -1,5 +1,5 @@
 import { Product } from '@/data/products';
-import { buildDynamicCategories, getParentCategory, normalizeCategorySlug } from '@/lib/category-visuals';
+import { buildDynamicCategories, getParentCategory, normalizeCategorySlug, SUBCATEGORIES } from '@/lib/category-visuals';
 
 export { buildDynamicCategories, getParentCategory, normalizeCategorySlug };
 
@@ -11,10 +11,26 @@ export function normalizeImageList(images: unknown): string[] {
   });
 }
 
+/** Check if the raw category matches a known subcategory slug */
+function matchSubcategory(rawCategory: string): string | null {
+  const slug = normalizeCategorySlug(rawCategory);
+  for (const subs of Object.values(SUBCATEGORIES)) {
+    const match = subs.find((s) => s.slug === slug || normalizeCategorySlug(s.name) === slug);
+    if (match) return match.slug;
+  }
+  return null;
+}
+
 export function mapDbProduct(p: any): Product {
   const normalizedImages = normalizeImageList(p.images);
   const rawCategory = p.category || '';
-  const normalizedCategory = getParentCategory(rawCategory, `${p.name || ''} ${p.description || ''} ${JSON.stringify(p.specs || {})}`);
+
+  // Check subcategory first
+  const subSlug = matchSubcategory(rawCategory);
+  const normalizedCategory = subSlug
+    ? rawCategory.trim()
+    : getParentCategory(rawCategory, `${p.name || ''} ${p.description || ''} ${JSON.stringify(p.specs || {})}`);
+  const categorySlug = subSlug || normalizeCategorySlug(normalizedCategory);
 
   return {
     id: p.id,
@@ -25,7 +41,7 @@ export function mapDbProduct(p: any): Product {
     image: normalizedImages[0] || '',
     images: normalizedImages,
     category: normalizedCategory,
-    categorySlug: normalizeCategorySlug(normalizedCategory),
+    categorySlug,
     brand: p.brand || '',
     condition: (p.condition || 'Nuevo') as Product['condition'],
     shortDescription: p.short_description || '',
