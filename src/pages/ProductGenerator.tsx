@@ -572,14 +572,12 @@ export default function ProductGenerator() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__auto__">Asignación automática</SelectItem>
-                        {FIXED_PARENT_CATEGORIES.map((option) => (
-                          <span key={option.slug}>
-                            <SelectItem value={option.name}>{option.name}</SelectItem>
-                            {(SUBCATEGORIES[option.slug] || []).map((sub) => (
-                              <SelectItem key={sub.slug} value={sub.name}>&nbsp;&nbsp;↳ {sub.name}</SelectItem>
-                            ))}
-                          </span>
-                        ))}
+                        {FIXED_PARENT_CATEGORIES.flatMap((option) => [
+                          <SelectItem key={option.slug} value={option.name}>{option.name}</SelectItem>,
+                          ...(SUBCATEGORIES[option.slug] || []).map((sub) => (
+                            <SelectItem key={sub.slug} value={sub.name}>&nbsp;&nbsp;↳ {sub.name}</SelectItem>
+                          )),
+                        ])}
                       </SelectContent>
                     </Select>
                   </div>
