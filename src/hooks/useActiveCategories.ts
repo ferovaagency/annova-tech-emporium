@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Category } from '@/data/products';
 import { supabase } from '@/integrations/supabase/client';
-import { buildCategoryRecord, FIXED_PARENT_CATEGORIES, getManualCategoryImage, normalizeCategorySlug } from '@/lib/category-visuals';
+import { buildCategoryRecord, FIXED_PARENT_CATEGORIES, SUBCATEGORIES, getManualCategoryImage, normalizeCategorySlug } from '@/lib/category-visuals';
 
 type CategoryRow = {
   id: string;
   name: string;
   slug: string;
   image_url?: string | null;
+  parent_id?: string | null;
 };
 
 const FIXED_SLUGS = FIXED_PARENT_CATEGORIES.map((category) => category.slug);
