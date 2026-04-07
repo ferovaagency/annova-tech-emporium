@@ -32,7 +32,7 @@ export function useActiveCategories() {
 
         if (!mounted) return;
 
-        const allowedRows = ((data || []) as CategoryRow[]).filter((row) => FIXED_SLUGS.includes(normalizeCategorySlug(row.slug || row.name)));
+        const allowedRows = ((data || []) as CategoryRow[]).filter((row) => ALL_CATEGORY_SLUGS.includes(normalizeCategorySlug(row.slug || row.name)));
         setCategoryRows(allowedRows);
       } finally {
         if (mounted) setLoading(false);
@@ -46,23 +46,36 @@ export function useActiveCategories() {
   }, []);
 
   const categories: Category[] = useMemo(() => {
-    return FIXED_PARENT_CATEGORIES.map((baseCategory) => {
+    const result: Category[] = [];
+
+    FIXED_PARENT_CATEGORIES.forEach((baseCategory) => {
       const row = categoryRows.find((item) => normalizeCategorySlug(item.slug || item.name) === baseCategory.slug);
       const manualImage = getManualCategoryImage(baseCategory.name);
-      if (!row) {
-        return {
-          ...baseCategory,
-          image: manualImage,
-        };
-      }
 
-      return {
-        ...buildCategoryRecord(baseCategory.name),
-        name: row.name || baseCategory.name,
-        slug: baseCategory.slug,
-        image: row.image_url?.trim() || manualImage,
-      };
+      const parent: Category = row
+        ? {
+            ...buildCategoryRecord(baseCategory.name),
+            name: row.name || baseCategory.name,
+            slug: baseCategory.slug,
+            image: row.image_url?.trim() || manualImage,
+          }
+        : { ...baseCategory, image: manualImage };
+
+      result.push(parent);
+
+      const subs = SUBCATEGORIES[baseCategory.slug] || [];
+      subs.forEach((sub) => {
+        const subRow = categoryRows.find((item) => normalizeCategorySlug(item.slug || item.name) === sub.slug);
+        result.push({
+          ...sub,
+          name: subRow?.name || sub.name,
+          image: subRow?.image_url?.trim() || manualImage,
+          parentSlug: baseCategory.slug,
+        } as Category & { parentSlug?: string });
+      });
     });
+
+    return result;
   }, [categoryRows]);
 
   return { categories, loading };
