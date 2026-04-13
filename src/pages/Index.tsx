@@ -33,7 +33,7 @@ function CategoryVisual({ name, image }: { name: string; image?: string }) {
 }
 
 export default function Index() {
-  const { categories } = useActiveCategories();
+  const { parentCategories: categories } = useDbCategories();
   const [featured, setFeatured] = useState<Product[]>([]);
   const [offers, setOffers] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
