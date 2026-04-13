@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/products';
 import { generateSlug } from '@/lib/slug';
 import { getParentCategory } from '@/lib/catalog';
-import { FIXED_PARENT_CATEGORIES, SUBCATEGORIES } from '@/lib/category-visuals';
+import { useDbCategories } from '@/hooks/useDbCategories';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +90,7 @@ function ImagePreview({ url, label }: { url: string; label: string }) {
 export default function ProductGenerator() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { parentCategories, getChildren } = useDbCategories();
 
   const [tab, setTab] = useState('productos');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -572,11 +573,14 @@ export default function ProductGenerator() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__auto__">Asignación automática</SelectItem>
-                        {FIXED_PARENT_CATEGORIES.flatMap((option) => [
-                          <SelectItem key={option.slug} value={option.name}>{option.name}</SelectItem>,
-                          ...(SUBCATEGORIES[option.slug] || []).map((sub) => (
-                            <SelectItem key={sub.slug} value={sub.name}>&nbsp;&nbsp;↳ {sub.name}</SelectItem>
-                          )),
+                        {parentCategories.flatMap((parent) => [
+                          <SelectItem key={parent.slug} value={parent.name}>{parent.name}</SelectItem>,
+                          ...getChildren(parent.id).flatMap((sub) => [
+                            <SelectItem key={sub.slug} value={sub.name}>&nbsp;&nbsp;↳ {sub.name}</SelectItem>,
+                            ...getChildren(sub.id).map((s3) => (
+                              <SelectItem key={s3.slug} value={s3.name}>&nbsp;&nbsp;&nbsp;&nbsp;· {s3.name}</SelectItem>
+                            )),
+                          ]),
                         ])}
                       </SelectContent>
                     </Select>
