@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/products';
 import { generateSlug } from '@/lib/slug';
 import { getParentCategory } from '@/lib/catalog';
-import { FIXED_PARENT_CATEGORIES, SUBCATEGORIES } from '@/lib/category-visuals';
+import { useDbCategories } from '@/hooks/useDbCategories';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

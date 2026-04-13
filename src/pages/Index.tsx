@@ -7,7 +7,7 @@ import ProductCard from '@/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProduct } from '@/lib/catalog';
-import { useActiveCategories } from '@/hooks/useActiveCategories';
+import { useDbCategories } from '@/hooks/useDbCategories';
 import heroBanner1 from '@/assets/hero-banner-1.png';
 
 function ProductSkeleton() {
