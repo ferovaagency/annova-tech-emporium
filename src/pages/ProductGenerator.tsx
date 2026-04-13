@@ -90,6 +90,7 @@ function ImagePreview({ url, label }: { url: string; label: string }) {
 export default function ProductGenerator() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { parentCategories, getChildren } = useDbCategories();
 
   const [tab, setTab] = useState('productos');
   const [editingId, setEditingId] = useState<string | null>(null);
