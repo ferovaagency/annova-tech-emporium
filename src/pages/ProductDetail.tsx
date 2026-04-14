@@ -50,6 +50,7 @@ function ImageFallback({ label }: { label: string }) {
 export default function ProductDetail() {
   const { slug } = useParams();
   const { addToCart } = useCart();
+  const { categories: allCats } = useDbCategories();
   const [product, setProduct] = useState<DBProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
