@@ -108,7 +108,6 @@ export default function ProductDetail() {
   const categorySlug = product.category ? normalizeCategorySlug(product.category) : '';
 
   // Find parent category for subcategory breadcrumb using DB categories
-  const { categories: allCats } = useDbCategories();
   let parentCategoryName = '';
   let parentCategorySlug = '';
   const currentCat = allCats.find((c) => c.slug === categorySlug);
