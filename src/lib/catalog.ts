@@ -1,7 +1,7 @@
 import { Product } from '@/data/products';
-import { normalizeCategorySlug } from '@/lib/category-visuals';
+import { normalizeCategorySlug, getParentCategory } from '@/lib/category-visuals';
 
-export { normalizeCategorySlug };
+export { normalizeCategorySlug, getParentCategory };
 
 export function normalizeImageList(images: unknown): string[] {
   if (!Array.isArray(images)) return [];

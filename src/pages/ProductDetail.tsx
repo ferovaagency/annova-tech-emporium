@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { getWhatsAppUrlForProduct } from '@/lib/whatsapp';
 import { normalizeCategorySlug } from '@/lib/catalog';
-import { SUBCATEGORIES } from '@/lib/category-visuals';
+import { useDbCategories } from '@/hooks/useDbCategories';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import { GA } from '@/hooks/useAnalytics';
 import { useDocumentSeo } from '@/hooks/useDocumentSeo';
