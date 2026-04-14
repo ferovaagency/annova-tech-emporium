@@ -131,19 +131,25 @@ export default function Store() {
           </div>
         )}
 
-        <div className="flex gap-8">
-          <aside className={`${showFilters ? 'block' : 'hidden'} w-full flex-shrink-0 lg:block lg:w-64`}>
-            <div className="sticky top-40 space-y-6 rounded-lg border bg-card p-4">
+        <div className="flex gap-6">
+          <aside className={`${showFilters ? 'block' : 'hidden'} w-64 shrink-0 lg:block`}>
+            <div className="sticky top-20 max-h-[calc(100vh-100px)] overflow-y-auto pr-2 space-y-6 rounded-lg border bg-card p-4">
               <div>
-                <h3 className="mb-3 font-montserrat text-sm font-semibold">Categoría</h3>
+                <h3 className="mb-3 font-montserrat text-sm font-semibold">Categorías</h3>
                 <div className="space-y-1">
+                  <button
+                    onClick={() => setSearchParams(searchQuery ? { q: searchQuery } : {})}
+                    className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${!categoryFilter ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:bg-muted'}`}
+                  >
+                    Todas las categorías
+                  </button>
                   {parentCategories.map((parent) => {
                     const subs = getChildren(parent.id);
                     return (
                       <div key={parent.id}>
                         <button
                           onClick={() => setCategoryParam(parent.slug)}
-                          className={`block w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted ${categoryFilter === parent.slug ? 'bg-muted font-semibold text-primary' : ''}`}
+                          className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${categoryFilter === parent.slug ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'}`}
                         >
                           {parent.name}
                         </button>
@@ -153,7 +159,7 @@ export default function Store() {
                             <div key={sub.id}>
                               <button
                                 onClick={() => setCategoryParam(sub.slug)}
-                                className={`block w-full rounded py-1 pl-5 text-left text-xs transition-colors hover:bg-muted ${categoryFilter === sub.slug ? 'bg-muted font-semibold text-primary' : ''}`}
+                                className={`w-full rounded-lg py-1.5 pl-6 pr-3 text-left text-xs transition-colors ${categoryFilter === sub.slug ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/60 hover:bg-muted'}`}
                               >
                                 ↳ {sub.name}
                               </button>
@@ -161,7 +167,7 @@ export default function Store() {
                                 <button
                                   key={s3.id}
                                   onClick={() => setCategoryParam(s3.slug)}
-                                  className={`block w-full rounded py-1 pl-9 text-left text-xs transition-colors hover:bg-muted ${categoryFilter === s3.slug ? 'bg-muted font-semibold text-primary' : ''}`}
+                                  className={`w-full rounded-lg py-1 pl-9 pr-3 text-left text-xs transition-colors ${categoryFilter === s3.slug ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/50 hover:bg-muted'}`}
                                 >
                                   · {s3.name}
                                 </button>
