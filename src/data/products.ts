@@ -30,36 +30,6 @@ export interface Category {
   image: string;
 }
 
-export const categories: Category[] = [
-  {
-    name: "Computadores",
-    slug: "computadores",
-    icon: "💻",
-    description: "Portátiles, desktops y estaciones de trabajo empresariales",
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Licenciamiento",
-    slug: "licenciamiento",
-    icon: "💿",
-    description: "Licencias, suscripciones y software corporativo",
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Servidores",
-    slug: "servidores",
-    icon: "🖥️",
-    description: "Servidores, datacenter e infraestructura empresarial",
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Workstations",
-    slug: "workstations",
-    icon: "🖥️",
-    description: "Estaciones de trabajo de alto rendimiento para diseño, ingeniería y renderizado",
-    image: "/placeholder.svg",
-  },
-];
 export const products: Product[] = [];
 
 export const blogPosts: Array<{

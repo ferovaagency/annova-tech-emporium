@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { getWhatsAppUrlForProduct } from '@/lib/whatsapp';
 import { normalizeCategorySlug } from '@/lib/catalog';
-import { SUBCATEGORIES } from '@/lib/category-visuals';
+import { useDbCategories } from '@/hooks/useDbCategories';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import { GA } from '@/hooks/useAnalytics';
 import { useDocumentSeo } from '@/hooks/useDocumentSeo';
@@ -50,6 +50,7 @@ function ImageFallback({ label }: { label: string }) {
 export default function ProductDetail() {
   const { slug } = useParams();
   const { addToCart } = useCart();
+  const { categories: allCats } = useDbCategories();
   const [product, setProduct] = useState<DBProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -106,14 +107,15 @@ export default function ProductDetail() {
   const primaryImage = images[0] || '';
   const categorySlug = product.category ? normalizeCategorySlug(product.category) : '';
 
-  // Find parent category for subcategory breadcrumb
+  // Find parent category for subcategory breadcrumb using DB categories
   let parentCategoryName = '';
   let parentCategorySlug = '';
-  for (const [pSlug, subs] of Object.entries(SUBCATEGORIES)) {
-    if (subs.some((s) => s.slug === categorySlug)) {
-      parentCategorySlug = pSlug;
-      parentCategoryName = pSlug.charAt(0).toUpperCase() + pSlug.slice(1);
-      break;
+  const currentCat = allCats.find((c) => c.slug === categorySlug);
+  if (currentCat?.parent_id) {
+    const parentCat = allCats.find((c) => c.id === currentCat.parent_id);
+    if (parentCat) {
+      parentCategorySlug = parentCat.slug;
+      parentCategoryName = parentCat.name;
     }
   }
 
