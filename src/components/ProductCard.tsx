@@ -27,6 +27,11 @@ export default function ProductCard({ product }: ProductCardProps) {
             title={product.name}
             className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            onError={(e) => {
+              const t = e.currentTarget;
+              const fallback = window.location.origin + '/placeholder.svg';
+              if (t.src !== fallback) t.src = fallback;
+            }}
           />
         ) : (
           <div className="flex aspect-square w-full items-center justify-center bg-muted text-muted-foreground">
