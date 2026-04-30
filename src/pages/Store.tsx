@@ -176,42 +176,62 @@ export default function Store() {
                   {parentCategories.map((parent) => {
                     const subs = getChildren(parent.id);
                     const isOpen = expanded.includes(parent.id);
-                    const isParentActive = categoryFilter === parent.slug;
+                    const hasActiveChild = subs.some(
+                      (s) => s.slug === categoryFilter || getChildren(s.id).some((s3) => s3.slug === categoryFilter),
+                    );
                     return (
-                      <div key={parent.id}>
+                      <div key={parent.id} className="mb-1">
+                        {/* PADRE — solo accordion, NO filtra */}
                         <button
-                          onClick={() => {
-                            // Filtra por toda la rama y expande/colapsa subs
-                            setCategoryParam(parent.slug);
-                            toggleExpanded(parent.id);
-                          }}
-                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${isParentActive ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'}`}
+                          type="button"
+                          onClick={() => toggleExpanded(parent.id)}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors cursor-pointer ${hasActiveChild ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
                           aria-expanded={isOpen}
                         >
                           <span>{parent.name}</span>
-                          {subs.length > 0 && (isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
+                          <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                         </button>
+                        {/* HIJOS — visibles solo si padre está expandido */}
                         {isOpen && subs.length > 0 && (
-                          <div className="mt-1 space-y-0.5 border-l border-muted pl-2">
+                          <div className="ml-2 mt-0.5 space-y-0.5 border-l-2 border-border pl-3">
                             {subs.map((sub) => {
                               const sub3 = getChildren(sub.id);
-                              const subActive = categoryFilter === sub.slug;
-                              const sub3OfThisActive = sub3.some((s3) => s3.slug === categoryFilter);
+                              const isSubActive = categoryFilter === sub.slug;
+                              const hasSub3Active = sub3.some((s) => s.slug === categoryFilter);
+                              const subOpen = expanded.includes(sub.id);
                               return (
                                 <div key={sub.id}>
+                                  {/* HIJO nivel 2 — SÍ filtra */}
                                   <button
-                                    onClick={() => setCategoryParam(sub.slug)}
-                                    className={`w-full rounded-lg px-2 py-1.5 text-left text-xs transition-colors ${subActive ? 'bg-primary/15 font-semibold text-primary' : 'text-foreground/70 hover:bg-muted'}`}
+                                    type="button"
+                                    onClick={() => {
+                                      setCategoryParam(sub.slug);
+                                      if (sub3.length > 0 && !subOpen) {
+                                        setExpanded((prev) => [...prev, sub.id]);
+                                      }
+                                    }}
+                                    className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs transition-colors ${isSubActive || hasSub3Active ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground hover:bg-muted'}`}
                                   >
-                                    ↳ {sub.name}
+                                    <span>{sub.name}</span>
+                                    {sub3.length > 0 && (
+                                      <ChevronDown
+                                        className={`w-3 h-3 transition-transform ${subOpen ? 'rotate-180' : ''}`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleExpanded(sub.id);
+                                        }}
+                                      />
+                                    )}
                                   </button>
-                                  {sub3.length > 0 && (subActive || sub3OfThisActive) && (
-                                    <div className="mt-0.5 space-y-0.5 border-l border-muted/60 pl-2">
+                                  {/* NIETOS nivel 3 — SÍ filtran */}
+                                  {sub3.length > 0 && subOpen && (
+                                    <div className="ml-2 mt-0.5 space-y-0.5 border-l border-border/50 pl-2">
                                       {sub3.map((s3) => (
                                         <button
                                           key={s3.id}
+                                          type="button"
                                           onClick={() => setCategoryParam(s3.slug)}
-                                          className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors ${categoryFilter === s3.slug ? 'bg-primary/10 font-semibold text-primary' : 'text-muted-foreground hover:bg-muted'}`}
+                                          className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors ${categoryFilter === s3.slug ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground/70 hover:bg-muted'}`}
                                         >
                                           · {s3.name}
                                         </button>
