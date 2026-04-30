@@ -1,4 +1,5 @@
-import { useLocation, BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,33 +12,33 @@ import AIChatWidget from "@/components/AIChatWidget";
 import SocialProofPopup from "@/components/SocialProofPopup";
 import CartDrawerCTA from "@/components/CartDrawerCTA";
 import CookieBanner from "@/components/CookieBanner";
-import Index from "./pages/Index";
-import Store from "./pages/Store";
-import ProductDetail from "./pages/ProductDetail";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import PaymentResult from "./pages/PaymentResult";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Legal from "./pages/Legal";
-import AdminPanel from "./pages/AdminPanel";
-import ProductGenerator from "./pages/ProductGenerator";
-import MyAccount from "./pages/MyAccount";
-import NotFound from "./pages/NotFound";
-import { useEffect } from "react";
+import ScrollToTop from "@/components/ScrollToTop";
+import { Loader2 } from "lucide-react";
+
+const Index = lazy(() => import("./pages/Index"));
+const Store = lazy(() => import("./pages/Store"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const PaymentResult = lazy(() => import("./pages/PaymentResult"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Legal = lazy(() => import("./pages/Legal"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const ProductGenerator = lazy(() => import("./pages/ProductGenerator"));
+const MyAccount = lazy(() => import("./pages/MyAccount"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
-  return null;
+function PageLoader() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 }
 
 const App = () => {
@@ -52,23 +53,25 @@ const App = () => {
             <div className="flex min-h-screen flex-col">
               <Header />
               <div className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/tienda" element={<Store />} />
-                  <Route path="/producto/:slug" element={<ProductDetail />} />
-                  <Route path="/carrito" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/pago-resultado" element={<PaymentResult />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/blog/:slug" element={<BlogPost />} />
-                  <Route path="/nosotros" element={<About />} />
-                  <Route path="/contacto" element={<Contact />} />
-                  <Route path="/legal" element={<Legal />} />
-                  <Route path="/admin" element={<AdminPanel />} />
-                  <Route path="/generador" element={<ProductGenerator />} />
-                  <Route path="/mi-cuenta" element={<MyAccount />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/tienda" element={<Store />} />
+                    <Route path="/producto/:slug" element={<ProductDetail />} />
+                    <Route path="/carrito" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/pago-resultado" element={<PaymentResult />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
+                    <Route path="/nosotros" element={<About />} />
+                    <Route path="/contacto" element={<Contact />} />
+                    <Route path="/legal" element={<Legal />} />
+                    <Route path="/admin" element={<AdminPanel />} />
+                    <Route path="/generador" element={<ProductGenerator />} />
+                    <Route path="/mi-cuenta" element={<MyAccount />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
               </div>
               <Footer />
               <WhatsAppButton />

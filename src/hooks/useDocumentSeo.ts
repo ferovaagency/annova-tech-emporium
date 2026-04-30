@@ -4,6 +4,7 @@ interface SeoConfig {
   title?: string;
   description?: string;
   canonical?: string;
+  jsonLd?: Record<string, any> | null;
 }
 
 function upsertMeta(selector: string, attribute: 'name' | 'property', value: string, content: string) {
@@ -16,7 +17,9 @@ function upsertMeta(selector: string, attribute: 'name' | 'property', value: str
   element.setAttribute('content', content);
 }
 
-export function useDocumentSeo({ title, description, canonical }: SeoConfig) {
+const JSONLD_ID = 'page-jsonld';
+
+export function useDocumentSeo({ title, description, canonical, jsonLd }: SeoConfig) {
   useEffect(() => {
     if (title) document.title = title;
     if (description) {
@@ -34,5 +37,22 @@ export function useDocumentSeo({ title, description, canonical }: SeoConfig) {
       link.setAttribute('href', canonical);
       upsertMeta('meta[property="og:url"]', 'property', 'og:url', canonical);
     }
-  }, [title, description, canonical]);
+
+    // Inject/update page-level JSON-LD
+    const existing = document.getElementById(JSONLD_ID);
+    if (jsonLd) {
+      const script = (existing as HTMLScriptElement) || document.createElement('script');
+      script.id = JSONLD_ID;
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify(jsonLd);
+      if (!existing) document.head.appendChild(script);
+    } else if (existing) {
+      existing.remove();
+    }
+
+    return () => {
+      const node = document.getElementById(JSONLD_ID);
+      if (node) node.remove();
+    };
+  }, [title, description, canonical, jsonLd]);
 }

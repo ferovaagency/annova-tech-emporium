@@ -18,21 +18,72 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Store",
-        "name": "AnnovaSoft",
-        "legalName": "Annova Software y Accesorios SAS",
-        "description": "Tecnología empresarial: servidores, software, infraestructura y equipos de cómputo para empresas en Colombia",
-        "url": "https://annova-tech-emporium.lovable.app",
-        "telephone": "+573057950550",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Cra 15 # 76-53 Oficina 204",
-          "addressLocality": "Bogotá",
-          "addressCountry": "CO"
-        },
-        "areaServed": { "@type": "Country", "name": "Colombia" },
-        "currenciesAccepted": "COP",
-        "paymentAccepted": "Tarjeta de crédito, PSE, Nequi, Wompi"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://annovasoft.com/#organization",
+            "name": "AnnovaSoft",
+            "legalName": "Annova Software y Accesorios SAS",
+            "url": "https://annovasoft.com",
+            "logo": "https://annovasoft.com/favicon.png",
+            "description": "Empresa colombiana de tecnología TIC: computadores, servidores, workstations, redes, UPS, equipos gamer y licenciamiento en Bogotá.",
+            "telephone": "+573202579393",
+            "email": "administrativo@annovasoft.com",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Cra 15 # 76-53 Oficina 204",
+              "addressLocality": "Bogotá",
+              "addressRegion": "Cundinamarca",
+              "addressCountry": "CO"
+            },
+            "areaServed": { "@type": "Country", "name": "Colombia" },
+            "openingHoursSpecification": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+              "opens": "08:00",
+              "closes": "18:00"
+            },
+            "sameAs": ["https://wa.me/573202579393"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://annovasoft.com/#website",
+            "url": "https://annovasoft.com",
+            "name": "AnnovaSoft",
+            "publisher": { "@id": "https://annovasoft.com/#organization" },
+            "inLanguage": "es-CO",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://annovasoft.com/tienda?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "Store",
+            "@id": "https://annovasoft.com/#store",
+            "name": "AnnovaSoft",
+            "url": "https://annovasoft.com",
+            "telephone": "+573202579393",
+            "priceRange": "$$",
+            "currenciesAccepted": "COP",
+            "paymentAccepted": "Cash, Credit Card, Bank Transfer, Wompi",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Cra 15 # 76-53 Oficina 204",
+              "addressLocality": "Bogotá",
+              "addressRegion": "Cundinamarca",
+              "addressCountry": "CO"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 4.7110,
+              "longitude": -74.0721
+            }
+          }
+        ]
       }
     </script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TN29PR2MD9"></script>

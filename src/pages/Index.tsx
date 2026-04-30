@@ -8,7 +8,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProduct } from '@/lib/catalog';
 import { useDbCategories } from '@/hooks/useDbCategories';
+import { useDocumentSeo } from '@/hooks/useDocumentSeo';
+import { buildSiteUrl } from '@/lib/site';
 import heroBanner1 from '@/assets/hero-banner-1.png';
+
+const CATEGORY_IMAGES: Record<string, string> = {
+  computadores: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&q=80',
+  workstation: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=600&q=80',
+  servidores: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80',
+  'redes-ups': 'https://images.unsplash.com/photo-1551703599-6b3e8379aa8c?w=600&q=80',
+  gamer: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80',
+  licenciamiento: 'https://images.unsplash.com/photo-1617040619263-41c5a9ca7521?w=600&q=80',
+  impresoras: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=600&q=80',
+};
+const CATEGORY_FALLBACK = 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80';
 
 function ProductSkeleton() {
   return <div className="space-y-3 rounded-lg border bg-card p-3"><Skeleton className="aspect-square w-full rounded-md" /><Skeleton className="h-3 w-1/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-8 w-full rounded-md" /></div>;
@@ -22,14 +35,24 @@ const heroBanners = [
   },
 ];
 
-function CategoryVisual({ name, image }: { name: string; image?: string }) {
-  const hasRealImage = Boolean(image && image.trim() && image !== '/placeholder.svg');
+function CategoryVisual({ name, slug, image }: { name: string; slug: string; image?: string }) {
+  const dbImage = image && image.trim() && image !== '/placeholder.svg' ? image : '';
+  const initialSrc = dbImage || CATEGORY_IMAGES[slug] || CATEGORY_FALLBACK;
 
-  if (hasRealImage) {
-    return <img src={image} alt={`${name} AnnovaSoft tecnología empresarial Colombia`} title={name} className="h-32 w-full object-cover object-center transition-transform duration-300 group-hover:scale-110" loading="lazy" />;
-  }
-
-  return <div className="h-32 w-full bg-muted" aria-hidden="true" />;
+  return (
+    <img
+      src={initialSrc}
+      alt={`${name} AnnovaSoft tecnología empresarial Colombia`}
+      title={name}
+      className="h-32 w-full object-cover object-center transition-transform duration-300 group-hover:scale-110"
+      loading="lazy"
+      onError={(e) => {
+        const t = e.currentTarget;
+        const fb = CATEGORY_IMAGES[slug] || CATEGORY_FALLBACK;
+        if (t.src !== fb) t.src = fb;
+      }}
+    />
+  );
 }
 
 export default function Index() {
@@ -74,6 +97,73 @@ export default function Index() {
   }, []);
 
   const skeletons = useMemo(() => Array.from({ length: 4 }, (_, i) => <ProductSkeleton key={i} />), []);
+
+  useDocumentSeo({
+    title: 'AnnovaSoft | Tecnología Empresarial en Colombia',
+    description:
+      'Computadores, servidores, workstations, equipos de red, gamer y licenciamiento para empresas en Colombia. Asesoría experta y entrega rápida.',
+    canonical: buildSiteUrl('/'),
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': 'https://annovasoft.com/#organization',
+          name: 'AnnovaSoft',
+          legalName: 'Annova Software y Accesorios SAS',
+          url: 'https://annovasoft.com',
+          logo: 'https://annovasoft.com/favicon.png',
+          description:
+            'Empresa colombiana de tecnología TIC: computadores, servidores, workstations, redes, UPS, gamer y licenciamiento en Bogotá.',
+          telephone: '+573202579393',
+          email: 'administrativo@annovasoft.com',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'Cra 15 # 76-53 Oficina 204',
+            addressLocality: 'Bogotá',
+            addressRegion: 'Cundinamarca',
+            addressCountry: 'CO',
+          },
+          areaServed: { '@type': 'Country', name: 'Colombia' },
+          sameAs: ['https://wa.me/573202579393'],
+        },
+        {
+          '@type': 'WebSite',
+          '@id': 'https://annovasoft.com/#website',
+          url: 'https://annovasoft.com',
+          name: 'AnnovaSoft',
+          publisher: { '@id': 'https://annovasoft.com/#organization' },
+          inLanguage: 'es-CO',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: {
+              '@type': 'EntryPoint',
+              urlTemplate: 'https://annovasoft.com/tienda?q={search_term_string}',
+            },
+            'query-input': 'required name=search_term_string',
+          },
+        },
+        {
+          '@type': 'Store',
+          '@id': 'https://annovasoft.com/#store',
+          name: 'AnnovaSoft',
+          url: 'https://annovasoft.com',
+          telephone: '+573202579393',
+          priceRange: '$$',
+          currenciesAccepted: 'COP',
+          paymentAccepted: 'Cash, Credit Card, Bank Transfer, Wompi',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'Cra 15 # 76-53 Oficina 204',
+            addressLocality: 'Bogotá',
+            addressRegion: 'Cundinamarca',
+            addressCountry: 'CO',
+          },
+          geo: { '@type': 'GeoCoordinates', latitude: 4.711, longitude: -74.0721 },
+        },
+      ],
+    },
+  });
 
   const goToBanner = (index: number) => setHeroIndex(index);
   const goPrev = () => setHeroIndex((prev) => (prev - 1 + heroBanners.length) % heroBanners.length);
@@ -123,7 +213,7 @@ export default function Index() {
 
       <section className="border-b bg-muted py-4"><div className="container mx-auto flex flex-wrap justify-center gap-8 px-4 text-sm font-medium text-muted-foreground"><span className="flex items-center gap-2"><Truck className="h-5 w-5 text-primary" /> Envío a todo Colombia</span><span className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary" /> Garantía empresarial</span><span className="flex items-center gap-2"><Headphones className="h-5 w-5 text-primary" /> Soporte dedicado</span></div></section>
 
-      {categories.length > 0 && <section className="py-12"><div className="container mx-auto px-4"><h2 className="mb-8 text-center text-3xl font-bebas md:text-4xl">Explora Nuestras <span className="text-primary">Categorías</span></h2><div className="grid grid-cols-2 gap-4 md:grid-cols-4">{categories.map((cat) => <Link key={cat.slug} to={`/tienda?categoria=${cat.slug}`} className="group overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-lg"><div className="overflow-hidden"><CategoryVisual name={cat.name} image={cat.image_url || undefined} /></div><div className="p-3 text-center"><h3 className="font-montserrat text-xs font-semibold">{cat.name}</h3></div></Link>)}</div></div></section>}
+      {categories.length > 0 && <section className="py-12"><div className="container mx-auto px-4"><h2 className="mb-8 text-center text-3xl font-bebas md:text-4xl">Explora Nuestras <span className="text-primary">Categorías</span></h2><div className="grid grid-cols-2 gap-4 md:grid-cols-4">{categories.map((cat) => <Link key={cat.slug} to={`/tienda?categoria=${cat.slug}`} className="group overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-lg"><div className="overflow-hidden"><CategoryVisual name={cat.name} slug={cat.slug} image={cat.image_url || undefined} /></div><div className="p-3 text-center"><h3 className="font-montserrat text-xs font-semibold">{cat.name}</h3></div></Link>)}</div></div></section>}
 
       <section className="bg-muted py-12"><div className="container mx-auto px-4"><div className="mb-8 flex items-center justify-between"><h2 className="text-3xl font-bebas md:text-4xl">Productos <span className="text-primary">Destacados</span></h2><Link to="/tienda" className="flex items-center gap-1 text-sm font-semibold text-secondary hover:underline">Ver todos <ArrowRight className="h-4 w-4" /></Link></div><div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">{loading ? skeletons : featured.map((p) => <ProductCard key={p.id} product={p} />)}</div></div></section>
 
