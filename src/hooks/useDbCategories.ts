@@ -10,32 +10,53 @@ export interface DbCategory {
   sort_order: number;
 }
 
+function getVisibleCategoryIds(categories: DbCategory[], activeCatIds: Set<string>): Set<string> {
+  function hasProducts(catId: string): boolean {
+    if (activeCatIds.has(catId)) return true;
+    return categories.some((c) => c.parent_id === catId && hasProducts(c.id));
+  }
+  return new Set(categories.filter((c) => hasProducts(c.id)).map((c) => c.id));
+}
+
 export function useDbCategories() {
   const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [activeCatIds, setActiveCatIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (supabase as any)
-      .from('categories')
-      .select('id,name,slug,image_url,parent_id,sort_order')
-      .order('sort_order', { ascending: true })
-      .then(({ data }: { data: DbCategory[] | null }) => {
-        setCategories(data || []);
-        setLoading(false);
-      });
+    Promise.all([
+      (supabase as any)
+        .from('categories')
+        .select('id,name,slug,image_url,parent_id,sort_order')
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('products')
+        .select('category_id')
+        .eq('active', true)
+        .not('category_id', 'is', null),
+    ]).then(([{ data: catData }, { data: prodData }]) => {
+      setCategories(catData || []);
+      setActiveCatIds(new Set((prodData || []).map((p: any) => p.category_id)));
+      setLoading(false);
+    });
   }, []);
 
+  const visibleCatIds = useMemo(
+    () => getVisibleCategoryIds(categories, activeCatIds),
+    [categories, activeCatIds],
+  );
+
   const parentCategories = useMemo(
-    () => categories.filter((c) => !c.parent_id),
-    [categories],
+    () => categories.filter((c) => !c.parent_id && visibleCatIds.has(c.id)),
+    [categories, visibleCatIds],
   );
 
   const getChildren = useCallback(
     (parentId: string) =>
       categories
-        .filter((c) => c.parent_id === parentId)
+        .filter((c) => c.parent_id === parentId && visibleCatIds.has(c.id))
         .sort((a, b) => a.sort_order - b.sort_order),
-    [categories],
+    [categories, visibleCatIds],
   );
 
   const getDescendantSlugs = useCallback(
