@@ -4,7 +4,7 @@ import { Product } from '@/data/products';
 import ProductCard from '@/components/ProductCard';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { X, SlidersHorizontal, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, SlidersHorizontal, Loader2, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProduct } from '@/lib/catalog';
 import { useDbCategories } from '@/hooks/useDbCategories';
