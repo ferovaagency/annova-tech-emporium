@@ -89,10 +89,39 @@ export default function ProductDetail() {
     }
   }, [product]);
 
+  const productJsonLd = product
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        '@id': `${buildSiteUrl(`/producto/${product.slug}`)}#product`,
+        name: product.name,
+        description: product.description || product.short_description || product.name,
+        sku: product.id,
+        image: (product.images || []).filter((i): i is string => typeof i === 'string' && i.length > 0),
+        brand: { '@type': 'Brand', name: product.brand || 'AnnovaSoft' },
+        offers: {
+          '@type': 'Offer',
+          url: buildSiteUrl(`/producto/${product.slug}`),
+          priceCurrency: 'COP',
+          price: product.sale_price || product.price || 0,
+          availability:
+            (product.stock ?? 0) > 0
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+          seller: {
+            '@type': 'Organization',
+            '@id': 'https://annovasoft.com/#organization',
+            name: 'AnnovaSoft',
+          },
+        },
+      }
+    : null;
+
   useDocumentSeo({
     title: product?.meta_title || (product ? `${product.name} | AnnovaSoft` : 'AnnovaSoft'),
     description: product?.meta_description || product?.short_description || 'Tecnología empresarial en Colombia.',
     canonical: product ? buildSiteUrl(`/producto/${product.slug}`) : undefined,
+    jsonLd: productJsonLd,
   });
 
   if (loading) return <main className="py-16 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /></main>;
