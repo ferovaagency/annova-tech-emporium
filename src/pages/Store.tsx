@@ -95,6 +95,22 @@ export default function Store() {
     setSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), categoria: slug });
   };
 
+  // Auto-expand parents when a child category is selected
+  useEffect(() => {
+    if (!categoryFilter || allCategories.length === 0) return;
+    const cat = allCategories.find((c) => c.slug === categoryFilter);
+    if (!cat) return;
+    const toOpen: string[] = [];
+    if (cat.parent_id) {
+      toOpen.push(cat.parent_id);
+      const parent = allCategories.find((c) => c.id === cat.parent_id);
+      if (parent?.parent_id) toOpen.push(parent.parent_id);
+    }
+    if (toOpen.length) {
+      setExpanded((prev) => Array.from(new Set([...prev, ...toOpen])));
+    }
+  }, [categoryFilter, allCategories]);
+
   return (
     <main className="py-8">
       <div className="container mx-auto px-4">
