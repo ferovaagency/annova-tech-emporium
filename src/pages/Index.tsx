@@ -96,7 +96,7 @@ export default function Index() {
     return () => clearInterval(interval);
   }, []);
 
-  const skeletons = useMemo(() => Array.from({ length: 4 }, (_, i) => <ProductSkeleton key={i} />), []);
+  const renderSkeletons = () => Array.from({ length: 4 }, (_, i) => <ProductSkeleton key={i} />);
 
   useDocumentSeo({
     title: 'AnnovaSoft | Tecnología Empresarial en Colombia',
