@@ -175,34 +175,55 @@ export default function Store() {
                   </button>
                   {parentCategories.map((parent) => {
                     const subs = getChildren(parent.id);
+                    const isOpen = expanded.includes(parent.id);
+                    const isParentActive = categoryFilter === parent.slug;
                     return (
                       <div key={parent.id}>
                         <button
-                          onClick={() => setCategoryParam(parent.slug)}
-                          className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${categoryFilter === parent.slug ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'}`}
+                          onClick={() => {
+                            // Filtra por toda la rama y expande/colapsa subs
+                            setCategoryParam(parent.slug);
+                            toggleExpanded(parent.id);
+                          }}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${isParentActive ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'}`}
+                          aria-expanded={isOpen}
                         >
-                          {parent.name}
+                          <span>{parent.name}</span>
+                          {subs.length > 0 && (isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
                         </button>
-                        {subs.map((sub) => {
-                          const sub3 = getChildren(sub.id);
-                          return (
-                            <div key={sub.id}>
-                              <button
-                                onClick={() => setCategoryParam(sub.slug)}
-                                className={`w-full rounded-lg py-1.5 pl-6 pr-3 text-left text-xs transition-colors ${categoryFilter === sub.slug ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/60 hover:bg-muted'}`}
-                              >
-                                ↳ {sub.name}
-                              </button>
-                              {sub3.map((s3) => (
-                                <button
-                                  key={s3.id}
-                                  onClick={() => setCategoryParam(s3.slug)}
-                                  className={`w-full rounded-lg py-1 pl-9 pr-3 text-left text-xs transition-colors ${categoryFilter === s3.slug ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/50 hover:bg-muted'}`}
-                                >
-                                  · {s3.name}
-                                </button>
-                              ))}
-                            </div>
+                        {isOpen && subs.length > 0 && (
+                          <div className="mt-1 space-y-0.5 border-l border-muted pl-2">
+                            {subs.map((sub) => {
+                              const sub3 = getChildren(sub.id);
+                              const subActive = categoryFilter === sub.slug;
+                              const sub3OfThisActive = sub3.some((s3) => s3.slug === categoryFilter);
+                              return (
+                                <div key={sub.id}>
+                                  <button
+                                    onClick={() => setCategoryParam(sub.slug)}
+                                    className={`w-full rounded-lg px-2 py-1.5 text-left text-xs transition-colors ${subActive ? 'bg-primary/15 font-semibold text-primary' : 'text-foreground/70 hover:bg-muted'}`}
+                                  >
+                                    ↳ {sub.name}
+                                  </button>
+                                  {sub3.length > 0 && (subActive || sub3OfThisActive) && (
+                                    <div className="mt-0.5 space-y-0.5 border-l border-muted/60 pl-2">
+                                      {sub3.map((s3) => (
+                                        <button
+                                          key={s3.id}
+                                          onClick={() => setCategoryParam(s3.slug)}
+                                          className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors ${categoryFilter === s3.slug ? 'bg-primary/10 font-semibold text-primary' : 'text-muted-foreground hover:bg-muted'}`}
+                                        >
+                                          · {s3.name}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                           );
                         })}
                       </div>
