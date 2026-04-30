@@ -4,10 +4,12 @@ import { Product } from '@/data/products';
 import ProductCard from '@/components/ProductCard';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { X, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { X, SlidersHorizontal, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProduct } from '@/lib/catalog';
 import { useDbCategories } from '@/hooks/useDbCategories';
+import { useDocumentSeo } from '@/hooks/useDocumentSeo';
+import { buildSiteUrl } from '@/lib/site';
 
 type StoreProduct = Product & {
   rawCategory?: string;
@@ -26,6 +28,18 @@ export default function Store() {
   const [showFilters, setShowFilters] = useState(false);
   const [dbProducts, setDbProducts] = useState<StoreProduct[]>([]);
   const [loadingDb, setLoadingDb] = useState(true);
+  const [expanded, setExpanded] = useState<string[]>([]);
+
+  const toggleExpanded = useCallback((id: string) => {
+    setExpanded((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }, []);
+
+  useDocumentSeo({
+    title: 'Tienda de Tecnología | Computadores, Servidores y más — AnnovaSoft',
+    description:
+      'Compra computadores, servidores, workstations, equipos de red, gamer y licencias en Bogotá Colombia. AnnovaSoft — tecnología empresarial con garantía.',
+    canonical: buildSiteUrl('/tienda'),
+  });
 
   useEffect(() => {
     async function fetchProducts() {
