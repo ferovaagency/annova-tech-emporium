@@ -8,7 +8,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProduct } from '@/lib/catalog';
 import { useDbCategories } from '@/hooks/useDbCategories';
+import { useDocumentSeo } from '@/hooks/useDocumentSeo';
+import { buildSiteUrl } from '@/lib/site';
 import heroBanner1 from '@/assets/hero-banner-1.png';
+
+const CATEGORY_IMAGES: Record<string, string> = {
+  computadores: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&q=80',
+  workstation: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=600&q=80',
+  servidores: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80',
+  'redes-ups': 'https://images.unsplash.com/photo-1551703599-6b3e8379aa8c?w=600&q=80',
+  gamer: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80',
+  licenciamiento: 'https://images.unsplash.com/photo-1617040619263-41c5a9ca7521?w=600&q=80',
+  impresoras: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=600&q=80',
+};
+const CATEGORY_FALLBACK = 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80';
 
 function ProductSkeleton() {
   return <div className="space-y-3 rounded-lg border bg-card p-3"><Skeleton className="aspect-square w-full rounded-md" /><Skeleton className="h-3 w-1/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-8 w-full rounded-md" /></div>;
