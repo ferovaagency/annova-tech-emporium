@@ -1,16 +1,75 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, X, Phone, Mail, MapPin, ChevronDown } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useActiveCategories } from '@/hooks/useActiveCategories';
+import { supabase } from '@/integrations/supabase/client';
+import { formatPrice } from '@/data/products';
 import logoImg from '@/assets/logo-annovasoft-new.png';
+
+interface SearchResult {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  sale_price: number | null;
+  images: string[] | null;
+  sku: string | null;
+}
 
 export default function Header() {
   const { totalItems } = useCart();
   const { categories } = useActiveCategories();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loadingResults, setLoadingResults] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setResults([]);
+      setOpen(false);
+      return;
+    }
+    setLoadingResults(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id,slug,name,price,sale_price,images,sku')
+        .eq('active', true)
+        .or(`name.ilike.%${q}%,sku.ilike.%${q}%`)
+        .limit(6);
+      setResults((data || []) as SearchResult[]);
+      setOpen(true);
+      setLoadingResults(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/tienda?q=${encodeURIComponent(searchQuery.trim())}`);
+      setOpen(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -38,22 +97,73 @@ export default function Header() {
             <img src={logoImg} alt="AnnovaSoft" className="h-10 w-auto md:h-12" />
           </Link>
 
-          <div className="mx-4 hidden max-w-2xl flex-1 md:flex">
-            <div className="relative w-full">
+          <div className="mx-4 hidden max-w-2xl flex-1 md:flex" ref={searchBoxRef}>
+            <form onSubmit={submitSearch} className="relative w-full">
               <input
                 type="text"
                 placeholder="Buscar productos, marcas, categorías..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-11 w-full rounded-lg border-2 border-muted-foreground/30 bg-background pl-4 pr-12 text-foreground transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                onFocus={() => results.length > 0 && setOpen(true)}
+                className="h-11 w-full rounded-lg border-2 border-muted-foreground/30 bg-background pl-4 pr-12 text-base text-foreground transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
-              <Link
-                to={searchQuery ? `/tienda?q=${encodeURIComponent(searchQuery)}` : '/tienda'}
+              <button
+                type="submit"
                 className="absolute right-0 top-0 flex h-full items-center rounded-r-lg bg-primary px-4 text-primary-foreground transition-opacity hover:opacity-90"
+                aria-label="Buscar"
               >
                 <Search className="h-5 w-5" />
-              </Link>
-            </div>
+              </button>
+
+              {open && (results.length > 0 || loadingResults) && (
+                <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-96 overflow-y-auto rounded-lg border bg-popover shadow-xl">
+                  {loadingResults && (
+                    <div className="p-3 text-center text-sm text-muted-foreground">Buscando…</div>
+                  )}
+                  {!loadingResults && results.map((r) => {
+                    const price = r.sale_price ?? r.price;
+                    const img = r.images?.[0];
+                    return (
+                      <Link
+                        key={r.id}
+                        to={`/producto/${r.slug}`}
+                        onClick={() => { setOpen(false); setSearchQuery(''); }}
+                        className="flex items-center gap-3 border-b border-border/50 p-3 text-left transition-colors last:border-0 hover:bg-muted"
+                      >
+                        {img ? (
+                          <img
+                            src={img}
+                            alt={r.name}
+                            className="h-12 w-12 flex-shrink-0 rounded object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              const t = e.currentTarget;
+                              const fb = window.location.origin + '/placeholder.svg';
+                              if (t.src !== fb) t.src = fb;
+                            }}
+                          />
+                        ) : (
+                          <div className="h-12 w-12 flex-shrink-0 rounded bg-muted" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
+                          <p className="text-sm font-semibold text-primary">{formatPrice(price)}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                  {!loadingResults && results.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={submitSearch}
+                      className="block w-full border-t bg-muted/40 p-2 text-center text-xs font-semibold text-primary hover:bg-muted"
+                    >
+                      Ver todos los resultados para "{searchQuery}"
+                    </button>
+                  )}
+                </div>
+              )}
+            </form>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
@@ -117,16 +227,18 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="border-b bg-background shadow-lg lg:hidden">
           <div className="p-4">
-            <div className="relative mb-4">
+            <form onSubmit={submitSearch} className="relative mb-4">
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-background pl-4 pr-10 text-foreground"
+                className="h-10 w-full rounded-lg border border-input bg-background pl-4 pr-10 text-base text-foreground"
               />
-              <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            </div>
+              <button type="submit" className="absolute right-3 top-2.5" aria-label="Buscar">
+                <Search className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </form>
             <Link to="/" className="block border-b border-border py-3 px-2 text-sm font-semibold" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
             {categories.map((cat) => (
               <Link key={cat.slug} to={`/tienda?categoria=${cat.slug}`} className="flex items-center gap-3 border-b border-border py-3 px-2 transition-colors hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>
