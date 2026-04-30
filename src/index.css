@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent horizontal overflow at viewport level */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+* {
+  box-sizing: border-box;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
