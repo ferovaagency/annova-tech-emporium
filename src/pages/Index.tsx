@@ -98,6 +98,73 @@ export default function Index() {
 
   const skeletons = useMemo(() => Array.from({ length: 4 }, (_, i) => <ProductSkeleton key={i} />), []);
 
+  useDocumentSeo({
+    title: 'AnnovaSoft | Tecnología Empresarial en Colombia',
+    description:
+      'Computadores, servidores, workstations, equipos de red, gamer y licenciamiento para empresas en Colombia. Asesoría experta y entrega rápida.',
+    canonical: buildSiteUrl('/'),
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': 'https://annovasoft.com/#organization',
+          name: 'AnnovaSoft',
+          legalName: 'Annova Software y Accesorios SAS',
+          url: 'https://annovasoft.com',
+          logo: 'https://annovasoft.com/favicon.png',
+          description:
+            'Empresa colombiana de tecnología TIC: computadores, servidores, workstations, redes, UPS, gamer y licenciamiento en Bogotá.',
+          telephone: '+573202579393',
+          email: 'administrativo@annovasoft.com',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'Cra 15 # 76-53 Oficina 204',
+            addressLocality: 'Bogotá',
+            addressRegion: 'Cundinamarca',
+            addressCountry: 'CO',
+          },
+          areaServed: { '@type': 'Country', name: 'Colombia' },
+          sameAs: ['https://wa.me/573202579393'],
+        },
+        {
+          '@type': 'WebSite',
+          '@id': 'https://annovasoft.com/#website',
+          url: 'https://annovasoft.com',
+          name: 'AnnovaSoft',
+          publisher: { '@id': 'https://annovasoft.com/#organization' },
+          inLanguage: 'es-CO',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: {
+              '@type': 'EntryPoint',
+              urlTemplate: 'https://annovasoft.com/tienda?q={search_term_string}',
+            },
+            'query-input': 'required name=search_term_string',
+          },
+        },
+        {
+          '@type': 'Store',
+          '@id': 'https://annovasoft.com/#store',
+          name: 'AnnovaSoft',
+          url: 'https://annovasoft.com',
+          telephone: '+573202579393',
+          priceRange: '$$',
+          currenciesAccepted: 'COP',
+          paymentAccepted: 'Cash, Credit Card, Bank Transfer, Wompi',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'Cra 15 # 76-53 Oficina 204',
+            addressLocality: 'Bogotá',
+            addressRegion: 'Cundinamarca',
+            addressCountry: 'CO',
+          },
+          geo: { '@type': 'GeoCoordinates', latitude: 4.711, longitude: -74.0721 },
+        },
+      ],
+    },
+  });
+
   const goToBanner = (index: number) => setHeroIndex(index);
   const goPrev = () => setHeroIndex((prev) => (prev - 1 + heroBanners.length) % heroBanners.length);
   const goNext = () => setHeroIndex((prev) => (prev + 1) % heroBanners.length);
