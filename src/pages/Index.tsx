@@ -35,14 +35,24 @@ const heroBanners = [
   },
 ];
 
-function CategoryVisual({ name, image }: { name: string; image?: string }) {
-  const hasRealImage = Boolean(image && image.trim() && image !== '/placeholder.svg');
+function CategoryVisual({ name, slug, image }: { name: string; slug: string; image?: string }) {
+  const dbImage = image && image.trim() && image !== '/placeholder.svg' ? image : '';
+  const initialSrc = dbImage || CATEGORY_IMAGES[slug] || CATEGORY_FALLBACK;
 
-  if (hasRealImage) {
-    return <img src={image} alt={`${name} AnnovaSoft tecnología empresarial Colombia`} title={name} className="h-32 w-full object-cover object-center transition-transform duration-300 group-hover:scale-110" loading="lazy" />;
-  }
-
-  return <div className="h-32 w-full bg-muted" aria-hidden="true" />;
+  return (
+    <img
+      src={initialSrc}
+      alt={`${name} AnnovaSoft tecnología empresarial Colombia`}
+      title={name}
+      className="h-32 w-full object-cover object-center transition-transform duration-300 group-hover:scale-110"
+      loading="lazy"
+      onError={(e) => {
+        const t = e.currentTarget;
+        const fb = CATEGORY_IMAGES[slug] || CATEGORY_FALLBACK;
+        if (t.src !== fb) t.src = fb;
+      }}
+    />
+  );
 }
 
 export default function Index() {
