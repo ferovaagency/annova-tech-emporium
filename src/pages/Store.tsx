@@ -53,7 +53,22 @@ export default function Store() {
     fetchProducts();
   }, []);
 
-  const allProducts = dbProducts;
+  const categoryIdToSlug = useMemo(() => {
+    const map = new Map<string, string>();
+    allCategories.forEach((c) => map.set(c.id, c.slug));
+    return map;
+  }, [allCategories]);
+
+  const allProducts = useMemo(
+    () =>
+      dbProducts.map((p) => ({
+        ...p,
+        categorySlug: (p as any).category_id
+          ? categoryIdToSlug.get((p as any).category_id) ?? p.categorySlug
+          : p.categorySlug,
+      })),
+    [dbProducts, categoryIdToSlug],
+  );
   const brands = useMemo(() => [...new Set(allProducts.map((p) => p.brand).filter(Boolean))], [allProducts]);
 
   const filtered = useMemo(() => {
