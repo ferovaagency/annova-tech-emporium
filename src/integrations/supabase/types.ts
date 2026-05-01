@@ -246,7 +246,6 @@ export type Database = {
           active: boolean | null
           brand: string | null
           category: string | null
-          category_id: string | null
           condition: string | null
           created_at: string
           description: string | null
@@ -271,7 +270,6 @@ export type Database = {
           active?: boolean | null
           brand?: string | null
           category?: string | null
-          category_id?: string | null
           condition?: string | null
           created_at?: string
           description?: string | null
@@ -296,7 +294,6 @@ export type Database = {
           active?: boolean | null
           brand?: string | null
           category?: string | null
-          category_id?: string | null
           condition?: string | null
           created_at?: string
           description?: string | null
@@ -317,15 +314,7 @@ export type Database = {
           updated_at?: string
           warranty?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "products_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       quote_requests: {
         Row: {
