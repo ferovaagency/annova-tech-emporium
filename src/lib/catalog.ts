@@ -35,6 +35,7 @@ export function mapDbProduct(p: any): Product {
     reviews: Array.isArray(p.reviews) ? p.reviews.length : 0,
     featured: Boolean(p.featured),
     rawCategory,
+    category_id: p.category_id || null,
   } as Product;
 }
 

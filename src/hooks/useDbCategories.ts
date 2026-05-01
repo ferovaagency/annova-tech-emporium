@@ -29,19 +29,18 @@ export function useDbCategories() {
         .from('categories')
         .select('id,name,slug,image_url,parent_id,sort_order')
         .order('sort_order', { ascending: true }),
-      (supabase as any)
+      supabase
         .from('products')
         .select('category_id')
         .eq('active', true)
         .not('category_id', 'is', null),
-    ]).then(([{ data: catData, error: catErr }, { data: prodData, error: prodErr }]) => {
+    ]).then(([{ data: catData }, { data: prodData }]) => {
       const cats: DbCategory[] = catData || [];
       setCategories(cats);
-      if (!prodErr && prodData?.length) {
-        setActiveCatIds(new Set(prodData.map((p: any) => p.category_id)));
+      if (prodData && prodData.length > 0) {
+        setActiveCatIds(new Set(prodData.map((p) => p.category_id as string)));
       } else {
-        // fallback: show all categories if product query fails
-        setActiveCatIds(new Set(cats.map((c: DbCategory) => c.id)));
+        setActiveCatIds(new Set(cats.map((c) => c.id)));
       }
       setLoading(false);
     });
