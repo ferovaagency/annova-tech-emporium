@@ -18,7 +18,7 @@ type StoreProduct = Product & {
 
 export default function Store() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { categories: allCategories, parentCategories, getChildren, getDescendantSlugs } = useDbCategories();
+  const { categories: allCategories, parentCategories, getChildren, getDescendantSlugs, getDescendantIds } = useDbCategories();
   const categoryFilter = searchParams.get('categoria') || '';
   const searchQuery = searchParams.get('q') || '';
   const [conditionFilter, setConditionFilter] = useState('');
@@ -75,8 +75,14 @@ export default function Store() {
     let result = [...allProducts];
 
     if (categoryFilter) {
-      const allSlugs = getDescendantSlugs(categoryFilter);
-      result = result.filter((product) => allSlugs.includes(product.categorySlug));
+      const cat = allCategories.find((c) => c.slug === categoryFilter);
+      if (cat) {
+        const catIdSet = new Set(getDescendantIds(cat.id));
+        result = result.filter((p) => catIdSet.has((p as any).category_id));
+      } else {
+        const allSlugs = getDescendantSlugs(categoryFilter);
+        result = result.filter((p) => allSlugs.includes(p.categorySlug));
+      }
     }
 
     if (conditionFilter) result = result.filter((p) => p.condition === conditionFilter);

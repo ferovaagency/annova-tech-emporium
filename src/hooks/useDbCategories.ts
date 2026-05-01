@@ -74,5 +74,13 @@ export function useDbCategories() {
     [categories],
   );
 
-  return { categories, parentCategories, getChildren, getDescendantSlugs, loading };
+  const getDescendantIds = useCallback(
+    (catId: string): string[] => {
+      const children = categories.filter((c) => c.parent_id === catId);
+      return [catId, ...children.flatMap((c) => getDescendantIds(c.id))];
+    },
+    [categories],
+  );
+
+  return { categories, parentCategories, getChildren, getDescendantSlugs, getDescendantIds, loading };
 }
