@@ -1,0 +1,1 @@
+UPDATE public.products SET category_id = '99d2e2cb-fa80-426d-babe-e99a996e2210' WHERE id = '88c3c6e6-6bcf-4db4-b8dc-f68e1441b314';
